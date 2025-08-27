@@ -8,6 +8,9 @@ import 'screens/revenue_analysis_page.dart';
 import 'screens/review_analysis_page.dart';
 import 'screens/mypage.dart';
 import 'screens/government_policy_page.dart';
+import 'screens/naver_link_page.dart';
+import 'screens/image_upload_page.dart';
+import 'screens/scraping_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,6 +49,9 @@ class MyApp extends StatelessWidget {
         '/review_analysis': (context) => const ReviewAnalysisPage(),
         '/mypage': (context) => const MyPage(),
         '/government_policy': (context) => const GovernmentPolicyPage(),
+        '/naver_link': (context) => const NaverLinkPage(),
+        '/image_upload': (context) => const ImageUploadPage(),
+        '/scraping': (context) => const ScrapingPage(),
       },
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 import 'main_page.dart';
 import 'store_search_popup.dart';
 
@@ -108,33 +110,31 @@ class _SignupPageState extends State<SignupPage> {
               children: [
                 const SizedBox(height: 80),
                 Center(
-                  child: Column(
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFF00AEFF), Color(0xFF0084FF)],
-                        ).createShader(bounds),
-                        child: Text(
-                          'MyBiz',
-                          style: GoogleFonts.roboto(
-                            fontSize: 52,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.8,
-                            color: Colors.white,
-                          ),
-                        ),
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => CommonStyles.brandGradient.createShader(bounds),
+                    child: Text(
+                      'MyBiz',
+                      style: GoogleFonts.roboto(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.8,
+                        color: Colors.white,
                       ),
-                      const SizedBox(height: 15),
-                      Text(
-                        'MyBiz 서비스 이용을 위한 정보를 입력해주세요',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: -0.8,
-                          color: const Color(0xFFB1B0B5),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Center(
+                  child: Text(
+                    'MyBiz 서비스 이용을 위한\n정보를 입력해주세요',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.8,
+                      color: const Color(0xFFB1B0B5),
+                      height: 1.3,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 50),
@@ -153,14 +153,14 @@ class _SignupPageState extends State<SignupPage> {
                   validator: (v) => null,
                 ),
                 const SizedBox(height: 20),
-                _buildBusinessNumberField(),
-                const SizedBox(height: 20),
                 _buildBusinessNameField(),
+                const SizedBox(height: 20),
+                _buildBusinessNumberField(),
                 const SizedBox(height: 20),
                 _buildInputField(
                   label: '가게 전화번호',
                   controller: _businessPhoneController,
-                  hint: ' ',
+                  hint: '가게 전화번호를 입력해주세요',
                   keyboardType: TextInputType.phone,
                   validator: (v) => null,
                 ),
@@ -178,6 +178,71 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInputField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required String? Function(String?) validator,
+    TextInputType? keyboardType,
+  }) {
+    bool hasError = false;
+    if (label == '이름') hasError = _showErrors && _nameError;
+    else if (label == '개인 전화번호') hasError = _showErrors && _phoneError;
+    else if (label == '상호명') hasError = _showErrors && _businessNameError;
+    else if (label == '사업자등록번호') hasError = _showErrors && _businessNumberError;
+    else if (label == '가게 전화번호') hasError = _showErrors && _businessPhoneError;
+    else if (label == '업종') hasError = _showErrors && _businessTypeError;
+    else if (label == '주소') hasError = _showErrors && _addressError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.8,
+            color: hasError ? Colors.red : const Color(0xFF999999),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(
+              color: hasError ? Colors.red : const Color(0xFFE5E5E5),
+              width: hasError ? 2 : 1,
+            ),
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.8,
+                color: const Color(0xFFB1B0B5),
+              ),
+            ),
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              letterSpacing: -0.8,
+              color: const Color(0xFF333333),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -376,125 +441,101 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  void _showStoreSearchPopup() {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        return StoreSearchPopup(
-          onStoreSelected: (name, address, businessType, businessNumber) {
-            setState(() {
-              _businessNameController.text = name;
-              _addressController.text = address;
-              _businessTypeController.text = businessType;
-              _businessNameError = false;
-              _addressError = false;
-              _businessTypeError = false;
-            });
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildInputField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    required String? Function(String?) validator,
-    TextInputType? keyboardType,
-  }) {
-    bool hasError = false;
-    if (label == '이름') hasError = _showErrors && _nameError;
-    else if (label == '개인 전화번호') hasError = _showErrors && _phoneError;
-    else if (label == '상호명') hasError = _showErrors && _businessNameError;
-    else if (label == '사업자등록번호') hasError = _showErrors && _businessNumberError;
-    else if (label == '가게 전화번호') hasError = _showErrors && _businessPhoneError;
-    else if (label == '업종') hasError = _showErrors && _businessTypeError;
-    else if (label == '주소') hasError = _showErrors && _addressError;
-
+  Widget _buildTermsAgreement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -0.8,
-            color: hasError ? Colors.red : const Color(0xFF999999),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 56,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(
-              color: hasError ? Colors.red : const Color(0xFFE5E5E5),
-              width: hasError ? 2 : 1,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Checkbox(
+              value: _agreedToTerms,
+              onChanged: (value) {
+                setState(() {
+                  _agreedToTerms = value ?? false;
+                  if (_agreedToTerms) _termsError = false;
+                });
+              },
+              visualDensity: const VisualDensity(horizontal: -2, vertical: -4),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              activeColor: const Color(0xFF00AEFF),
+              side: _showErrors && _termsError
+                  ? const BorderSide(color: Colors.red, width: 0)
+                  : const BorderSide(color: Color(0xFF00AEFF), width: 0),
             ),
-          ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              hintText: hint,
-              hintStyle: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -0.8,
-                color: const Color(0xFFB1B0B5),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '이용약관 및 개인정보처리방침에 동의합니다.',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.8,
+                  color: _showErrors && _termsError ? Colors.red : const Color(0xFF333333).withOpacity(0.6),
+                ),
               ),
             ),
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              letterSpacing: -0.8,
-              color: const Color(0xFF333333),
+          ],
+        ),
+        const SizedBox(height: 4), // 8 -> 4로 줄임
+        Row(
+          children: [
+            const SizedBox(width: 40), // Checkbox와 정렬 맞추기
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => _showTermsDetail('개인정보처리방침'),
+                  child: Text(
+                    '개인정보처리방침',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.8,
+                      color: const Color(0xFF00AEFF),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                Text(
+                  ' 또는 ',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.8,
+                    color: const Color(0xFF666666),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _showTermsDetail('이용약관'),
+                  child: Text(
+                    '이용약관',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.8,
+                      color: const Color(0xFF00AEFF),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                Text(
+                  ' 자세히보기',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.8,
+                    color: const Color(0xFF666666),
+                  ),
+                ),
+              ],
             ),
-          ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildTermsAgreement() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Checkbox(
-          value: _agreedToTerms,
-          onChanged: (value) {
-            setState(() {
-              _agreedToTerms = value ?? false;
-              if (_agreedToTerms) _termsError = false;
-            });
-          },
-          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          activeColor: const Color(0xFF00AEFF),
-          side: _showErrors && _termsError
-              ? const BorderSide(color: Colors.red, width: 0)
-              : const BorderSide(color: Color(0xFF00AEFF), width: 0),
-        ),
-        Expanded(
-          child: Text(
-            '이용약관 및 개인정보처리방침에 동의합니다.',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              letterSpacing: -0.8,
-              color: _showErrors && _termsError ? Colors.red : const Color(0xFF333333).withOpacity(0.6),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildStartButton() {
     return GestureDetector(
@@ -538,14 +579,10 @@ class _SignupPageState extends State<SignupPage> {
       child: Container(
         width: double.infinity,
         height: 56,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF00AEFF), Color(0xFF0084FF)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(5),
-        ),
+                        decoration: BoxDecoration(
+                  gradient: CommonStyles.brandGradient,
+                  borderRadius: BorderRadius.circular(5),
+                ),
         child: Center(
           child: Text(
             'MyBiz 시작하기',
@@ -560,4 +597,77 @@ class _SignupPageState extends State<SignupPage> {
       ),
     );
   }
+
+  void _showStoreSearchPopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return StoreSearchPopup(
+          onStoreSelected: (name, address, businessType, businessNumber) {
+            setState(() {
+              _businessNameController.text = name;
+              _addressController.text = address;
+              _businessTypeController.text = businessType;
+              _businessNameError = false;
+              _addressError = false;
+              _businessTypeError = false;
+            });
+          },
+        );
+      },
+    );
+  }
+
+
+
+  void _showTermsDetail(String type) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            type,
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.8,
+              color: const Color(0xFF333333),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              type == '이용약관' 
+                ? 'MyBiz 서비스 이용약관\n\n1. 서비스 이용\n- 본 서비스는 소상공인을 위한 AI 비즈니스 어시스턴트 서비스입니다.\n- 서비스 이용 시 본 약관에 동의한 것으로 간주됩니다.\n\n2. 서비스 내용\n- AI 광고 생성 및 분석\n- 매출 분석 및 리뷰 분석\n- 정부정책 정보 제공\n- 네이버 연동 서비스 (리뷰 분석용)\n\n3. 이용자의 의무\n- 정확한 정보 제공\n- 서비스 이용 규정 준수\n- 타인 정보 보호\n- 개인정보 수집 및 이용에 동의\n\n4. 서비스 변경 및 중단\n- 서비스 개선을 위한 변경 가능\n- 부득이한 경우 서비스 중단 가능\n\n5. 개인정보 수집 및 이용\n- 서비스 제공을 위해 필요한 최소한의 개인정보를 수집합니다\n- 수집된 정보는 서비스 제공 및 개선 목적으로만 사용됩니다\n- 고객의 동의 없이 제3자에게 제공하지 않습니다\n- 서비스 이용 종료 시까지 보관하며, 탈퇴 시 즉시 삭제됩니다'
+                : '개인정보처리방침\n\n1. 수집하는 개인정보\n- 이름, 전화번호, 이메일\n- 사업자등록번호, 상호명, 주소\n- 업종 및 가게 정보\n- 네이버 아이디 및 비밀번호 (연동 시)\n- 가게 정보 (리뷰 분석용)\n\n2. 개인정보 수집 목적\n- 서비스 제공 및 개선\n- 고객 지원 및 문의 응답\n- 법적 의무 이행\n- 네이버 연동 서비스 제공\n- 리뷰 분석 및 비즈니스 인사이트 제공\n\n3. 개인정보 보유 기간\n- 서비스 이용 기간 동안 보유\n- 탈퇴 시 즉시 삭제\n- 네이버 연동 해제 시 관련 정보 즉시 삭제\n\n4. 개인정보의 제3자 제공\n- 원칙적으로 제3자에게 제공하지 않음\n- 법적 의무가 있는 경우에만 제공\n- 네이버 연동 시에도 고객 동의 없이 제3자 제공 금지',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.8,
+                color: const Color(0xFF666666),
+                height: 1.5,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                '확인',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.8,
+                  color: const Color(0xFF00AEFF),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 }

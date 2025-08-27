@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'main_page.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({Key? key}) : super(key: key);
@@ -156,54 +158,104 @@ class _AiChatPageState extends State<AiChatPage>
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildAppBar(),
-            const Divider(height: 1, thickness: 1, color: _cLine),
-            // 채팅 영역 + '입력 중…' 버블을 리스트 마지막에 붙이기
-            Expanded(child: _buildChatAreaWithTyping(bottomRegionHeight)),
-            // ====== 하단 ======
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              height: bottomRegionHeight,
-              padding: EdgeInsets.only(bottom: keyboardOpen ? 6 : 0),
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  // 움직이는 파장(녹음 중 + 키보드 닫힘일 때만)
-                  if (!keyboardOpen && _isRecording)
-                    Positioned.fill(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: CustomPaint(
-                          size: const Size(double.infinity as double, 200),
-                          painter: _WavePainter(
-                            phase: _wavePhase,
-                            opacity: 0.65,
-                            colors: const [Color(0xFF9B8CFF), _brandBlue],
+            Column(
+              children: [
+                const MainHeader(title: 'AI 채팅'),
+                const Divider(height: 1, thickness: 1, color: _cLine),
+                // 채팅 영역 + '입력 중…' 버블을 리스트 마지막에 붙이기
+                Expanded(child: _buildChatAreaWithTyping(bottomRegionHeight)),
+                // ====== 하단 ======
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  height: bottomRegionHeight,
+                  padding: EdgeInsets.only(bottom: keyboardOpen ? 6 : 0),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      // 움직이는 파장(녹음 중 + 키보드 닫힘일 때만)
+                      if (!keyboardOpen && _isRecording)
+                        Positioned.fill(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: CustomPaint(
+                              size: const Size(double.infinity, 200),
+                              painter: _WavePainter(
+                                phase: _wavePhase,
+                                opacity: 0.65,
+                                colors: const [Color(0xFF9B8CFF), _brandBlue],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  // “듣고 있어요” 알약 (탭하면 녹음 종료)
-                  if (!keyboardOpen && _isRecording)
-                    Positioned(
-                      bottom: 128,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: GestureDetector(
-                          onTap: _toggleRecording,
-                          child: _listeningPill(),
+                      // "듣고 있어요" 알약 (탭하면 녹음 종료)
+                      if (!keyboardOpen && _isRecording)
+                        Positioned(
+                          bottom: 128,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: _toggleRecording,
+                              child: _listeningPill(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  // 입력 영역
-                  Positioned(left: 0, right: 0, bottom: 0, child: _buildInputArea()),
-                ],
-              ),
+                      // AI 타이핑 중일 때 로딩 애니메이션
+                      if (_isAiTyping)
+                        Positioned(
+                          bottom: 80,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'AI가 응답을 작성중입니다...',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                      // 입력 영역
+                      Positioned(left: 0, right: 0, bottom: 0, child: _buildInputArea()),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            // 마이크 버튼 제거 (AI 채팅에서는 불필요)
+            // Positioned(
+            //   bottom: bottomRegionHeight + 5,
+            //   left: 0,
+            //   right: 0,
+            //   child: const MainMicFab(),
+            // ),
           ],
         ),
       ),

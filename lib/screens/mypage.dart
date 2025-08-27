@@ -12,6 +12,11 @@ import 'inquiry_page.dart';
 import 'withdraw_page.dart';
 import 'signup_page.dart';
 import 'edit_profile_page.dart';
+import 'naver_link_page.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/main_page_layout.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -21,80 +26,28 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  // ===== 스타일 상수 =====
-  static const _sectionPadding = EdgeInsets.all(16);
-  static const _sectionGap = 12.0; // 섹션 간 간격 ↓ (16→12)
-  static const _lightLine = Color(0xFFE9EBF3); // 연한 내부 라인
-
-  Divider _divider([double h = 22]) =>
-      Divider(height: h, thickness: 1, 
-  color: _lightLine.withOpacity(0.4)); // 내부 라인 간격 ↑
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F5FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildProfileSection(),
-                    const SizedBox(height: _sectionGap),
-                    _buildMyInfoSection(),
-                    const SizedBox(height: _sectionGap),
-                    _buildStoreInfoSection(),
-                    const SizedBox(height: _sectionGap),
-                    _buildOtherSection(),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-            _buildBottomNavigation(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Stack(
+    return MainPageLayout(
+      selectedIndex: 3,
+      child: Column(
         children: [
-          const Center(
-            child: Text(
-              '마이페이지',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
-                color: Color(0xFF333333),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, a, b) => const MainPage(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-              child: const SizedBox(
-                width: 24,
-                height: 24,
-                child: Icon(Icons.arrow_back_ios, size: 16, color: Color(0xFF333333)),
+          const MainHeader(title: '마이페이지'),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildProfileSection(),
+                  const SizedBox(height: CommonStyles.sectionGap),
+                  _buildMyInfoSection(),
+                  const SizedBox(height: CommonStyles.sectionGap),
+                  _buildStoreInfoSection(),
+                  const SizedBox(height: CommonStyles.sectionGap),
+                  _buildOtherSection(),
+                  const SizedBox(height: 100),
+                ],
               ),
             ),
           ),
@@ -103,19 +56,10 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // ===== 섹션들 (큰 박스 테두리 제거) =====
-  BoxDecoration _sectionBox() => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        // border 제거 (요청)
-        // 옵션: 살짝 그림자 원하면 아래 주석 해제
-        // boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: Offset(0,4))],
-      );
-
   Widget _buildProfileSection() {
     return Container(
-      padding: _sectionPadding,
-      decoration: _sectionBox(),
+      padding: CommonStyles.sectionPadding,
+      decoration: CommonStyles.sectionBox(),
       child: Row(
         children: [
           GestureDetector(
@@ -123,11 +67,17 @@ class _MyPageState extends State<MyPage> {
             child: Container(
               width: 84,
               height: 84,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(42)),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(42),
+                border: Border.all(
+                  color: CommonStyles.borderColor,
+                  width: 3,
+                ),
+              ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(42),
                 child: Image.asset(
-                  'assets/images/user.png',
+                  'assets/images/profile.png',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.grey[300],
@@ -144,22 +94,12 @@ class _MyPageState extends State<MyPage> {
               children: [
                 Text(
                   '${UserData.name}님',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF333333),
-                    letterSpacing: -0.8,
-                  ),
+                  style: CommonStyles.titleStyle,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Tel. ${UserData.phone}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF999999),
-                    letterSpacing: -0.8,
-                  ),
+                  style: CommonStyles.labelStyle,
                 ),
               ],
             ),
@@ -171,19 +111,14 @@ class _MyPageState extends State<MyPage> {
 
   Widget _buildMyInfoSection() {
     return Container(
-      padding: _sectionPadding,
-      decoration: _sectionBox(),
+      padding: CommonStyles.sectionPadding,
+      decoration: CommonStyles.sectionBox(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '내 정보',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.8,
-              color: Color(0xFF333333),
-            ),
+            style: CommonStyles.titleStyle,
           ),
           const SizedBox(height: 12),
           _buildInfoRow('이름', UserData.name, showDivider: true),
@@ -197,19 +132,14 @@ class _MyPageState extends State<MyPage> {
 
   Widget _buildStoreInfoSection() {
     return Container(
-      padding: _sectionPadding,
-      decoration: _sectionBox(),
+      padding: CommonStyles.sectionPadding,
+      decoration: CommonStyles.sectionBox(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '가게 정보',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.8,
-              color: Color(0xFF333333),
-            ),
+            style: CommonStyles.titleStyle,
           ),
           const SizedBox(height: 12),
           _buildInfoRow('가게명', UserData.businessName, showDivider: true),
@@ -224,19 +154,14 @@ class _MyPageState extends State<MyPage> {
 
   Widget _buildOtherSection() {
     return Container(
-      padding: _sectionPadding,
-      decoration: _sectionBox(),
+      padding: CommonStyles.sectionPadding,
+      decoration: CommonStyles.sectionBox(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '기타',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.8,
-              color: Color(0xFF333333),
-            ),
+            style: CommonStyles.titleStyle,
           ),
           const SizedBox(height: 12),
           _buildMenuRow('정보 수정하기', () async {
@@ -260,6 +185,16 @@ class _MyPageState extends State<MyPage> {
               ),
             );
           }, showDivider: true),
+          _buildMenuRow('네이버 연동', () {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, a, b) => const NaverLinkPage(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
+          }, showDivider: true),
           _buildMenuRow('로그아웃', () {
             _showLogoutDialog();
           }, showDivider: true),
@@ -271,72 +206,61 @@ class _MyPageState extends State<MyPage> {
     );
   }
 
-  // ===== 내부 행 (라인 간격 넓힘) =====
   Widget _buildInfoRow(String label, String value, {bool showDivider = false}) {
     final row = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6), // ↑ (10→14)
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
           SizedBox(
             width: 80,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                letterSpacing: -0.8,
-                color: Color(0xFF999999),
-              ),
+              style: CommonStyles.labelStyle,
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Color(0xFF666666),
-                letterSpacing: -0.8,
-              ),
+              style: CommonStyles.contentStyle,
             ),
           ),
         ],
       ),
     );
     if (!showDivider) return row;
-    return Column(children: [row, _divider()]);
+    return Column(children: [row, CommonStyles.divider()]);
   }
 
   Widget _buildMenuRow(String title, VoidCallback onTap, {bool showDivider = false}) {
-    final row = GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6), // ↑ (10/12→14)
-        child: Row(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                letterSpacing: -0.8,
-                color: title == '탈퇴하기' ? const Color(0xFFEE4335) : const Color(0xFF999999),
+    final row = Container(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(
+            children: [
+              Text(
+                title,
+                style: CommonStyles.contentStyle.copyWith(
+                  color: const Color(0xFF999999),
+                ),
               ),
-            ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF999999)),
-          ],
+              const Spacer(),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF999999)),
+            ],
+          ),
         ),
       ),
     );
     if (!showDivider) return row;
-    return Column(children: [row, _divider()]);
+    return Column(children: [row, CommonStyles.divider()]);
   }
 
   // ===== 하단 네비 =====
 
-Widget _buildBottomNavigation() {
+Widget _buildBottomNavigation_REMOVED() {
   return SizedBox(
     child: Stack(
       clipBehavior: Clip.none,
@@ -367,7 +291,7 @@ Widget _buildBottomNavigation() {
           top: -25,
           left: 0,
           right: 0,
-          child: Center(child: _buildMicButton()),
+          child: Center(child: SizedBox()),
         ),
       ],
     ),
@@ -434,7 +358,7 @@ Widget _buildNavItem(String imagePath, String label, bool isSelected) {
   );
 }
 
-Widget _buildMicButton() {
+Widget _buildMicButton_REMOVED() {
   return GestureDetector(
     onTap: () {
       Navigator.push(
@@ -455,9 +379,6 @@ Widget _buildMicButton() {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withOpacity(0.95),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 10, offset: const Offset(0, 6)),
-            ],
           ),
         ),
         Container(
@@ -491,61 +412,82 @@ Widget _buildMicButton() {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: Container(
-          padding: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 6),
+              const SizedBox(height: 8), // 20에서 8로 줄임
               const Text(
-                '로그아웃 하시겠습니까?',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF666666), letterSpacing: -0.8),
+                '로그아웃',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.8,
+                  color: Color(0xFF333333),
+                ),
               ),
               const SizedBox(height: 12),
+              Text(
+                '정말 로그아웃 하시겠습니까?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.8,
+                  color: const Color(0xFF666666),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Container(
-                        height: 43,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Center(
-                          child: Text('취소', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: -0.8, color: Color(0xFF00C2FD))),
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE5E5E5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: const Color(0xFFF8F9FA),
+                      ),
+                      child: Text(
+                        '취소',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF666666),
+                          letterSpacing: -0.8,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.pushReplacement(
-                          context,
-                          PageRouteBuilder(pageBuilder: (c, a, b) => const LoginPage(), transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero),
-                        );
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
                       },
-                      child: Container(
-                        height: 43,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)], begin: Alignment.centerLeft, end: Alignment.centerRight),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Center(
-                          child: Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: -0.8, color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00AEFF),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        '로그아웃',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: -0.8,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -554,9 +496,97 @@ Widget _buildMicButton() {
   }
 
   void _showWithdrawDialog() {
-    Navigator.push(
-      context,
-      PageRouteBuilder(pageBuilder: (c, a, b) => const WithdrawPage(), transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8), // 20에서 8로 줄임
+              const Text(
+                '회원탈퇴',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.8,
+                  color: Color(0xFF333333),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '정말 탈퇴하시겠습니까?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.8,
+                  color: const Color(0xFF666666),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE5E5E5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: const Color(0xFFF8F9FA),
+                      ),
+                      child: Text(
+                        '취소',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF666666),
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (context, a, b) => const WithdrawPage(),
+                            transitionDuration: Duration.zero,
+                            reverseTransitionDuration: Duration.zero,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B6B),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        '탈퇴하기',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

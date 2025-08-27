@@ -5,6 +5,10 @@ import 'ad_creation_page.dart';
 import 'revenue_analysis_page.dart';
 import 'mypage.dart';
 import 'ai_chat_page.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/main_page_layout.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GovernmentPolicyPage extends StatefulWidget {
   const GovernmentPolicyPage({super.key});
@@ -15,119 +19,113 @@ class GovernmentPolicyPage extends StatefulWidget {
 
 class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
   String _selectedRegion = '전체';
+  String _searchQuery = '';
+  final FocusNode _searchFocusNode = FocusNode();
 
   final List<String> _regions = ['전체', '서울', '경기', '인천', '부산', '광주', '대구', '대전', '이외'];
 
+  // 정부정책 데이터
+  final List<Map<String, dynamic>> _policies = [
+    {
+      'title': '소상공인 지원금 신청 안내',
+      'description': '2025년 소상공인 지원금 신청이 시작되었습니다.',
+      'date': '2025.01.15',
+      'url': 'https://www.semas.or.kr',
+      'category': '지원금',
+      'region': '전체'
+    },
+    {
+      'title': '창업 지원 프로그램',
+      'description': '신규 창업자를 위한 종합 지원 프로그램을 운영합니다.',
+      'date': '2025.01.10',
+      'url': 'https://www.startup.go.kr',
+      'category': '창업지원',
+      'region': '전체'
+    },
+    {
+      'title': '디지털 전환 지원',
+      'description': '소상공인의 디지털 전환을 위한 기술 지원을 제공합니다.',
+      'date': '2025.01.08',
+      'url': 'https://www.digital.go.kr',
+      'category': '기술지원',
+      'region': '전체'
+    },
+    {
+      'title': '세무 상담 서비스',
+      'description': '무료 세무 상담 및 세무 신고 지원 서비스를 제공합니다.',
+      'date': '2025.01.05',
+      'url': 'https://www.nts.go.kr',
+      'category': '세무지원',
+      'region': '전체'
+    },
+    {
+      'title': '서울시 소상공인 지원',
+      'description': '서울시 소상공인을 위한 특별 지원 프로그램입니다.',
+      'date': '2025.01.12',
+      'url': 'https://www.seoul.go.kr',
+      'category': '지역지원',
+      'region': '서울'
+    },
+    {
+      'title': '경기도 창업 멘토링',
+      'description': '경기도 신규 창업자를 위한 전문 멘토링 서비스입니다.',
+      'date': '2025.01.09',
+      'url': 'https://www.gg.go.kr',
+      'category': '창업지원',
+      'region': '경기'
+    },
+  ];
+
+  // 검색어와 지역에 따른 필터링된 정책 목록
+  List<Map<String, dynamic>> get _filteredPolicies {
+    return _policies.where((policy) {
+      bool matchesRegion = _selectedRegion == '전체' || policy['region'] == _selectedRegion;
+      bool matchesSearch = _searchQuery.isEmpty || 
+          policy['title'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          policy['description'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          policy['category'].toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesRegion && matchesSearch;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F5FA),
-      body: SafeArea(
+    return MainPageLayout(
+      selectedIndex: 0,
+      child: GestureDetector(
+        onTap: () {
+          // 다른 곳을 터치하면 검색 focus 해제
+          _searchFocusNode.unfocus();
+        },
         child: Column(
           children: [
-            
-            // 헤더
-            _buildHeader(),
-            
-            // 지역 선택 버튼들
+            const MainHeader(title: '정부정책'),
             _buildRegionButtons(),
-            
-            // 메인 콘텐츠
+            const SizedBox(height: 16),
+            _buildSearchBar(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
-                    
-                    // 정부정책 카드들
-                    _buildPolicyCard(
-                      imagePath: 'assets/images/store.png',
-                      title: '타이틀입니다.',
-                      subtitle: '서브타이틀 입니다.',
-                      date: '2025.08.04',
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    _buildPolicyCard(
-                      imagePath: 'assets/images/store.png',
-                      title: '타이틀입니다.',
-                      subtitle: '서브타이틀 입니다.',
-                      date: '2025.08.04',
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    _buildPolicyCard(
-                      imagePath: 'assets/images/store.png',
-                      title: '타이틀입니다.',
-                      subtitle: '서브타이틀 입니다.',
-                      date: '2025.08.04',
-                    ),
-                    
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
+                    _buildPolicyList(),
+                    const SizedBox(height: 100), // 네비게이션 바 높이만큼 여백 추가
                   ],
                 ),
               ),
             ),
-            
-            // 하단 네비게이션
-            _buildBottomNavigation(),
           ],
         ),
       ),
     );
   }
 
-  
-
-  Widget _buildHeader() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Stack(
-        children: [
-          Center(
-            child: const Text(
-              '정부정책',
-              style: TextStyle(
-
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
-                color: Color(0xFF333333),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const MainPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        ),
-              child: Container(
-                width: 8,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 16,
-                  color: Color(0xFF333333),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   Widget _buildRegionButtons() {
@@ -150,18 +148,19 @@ class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.white : const Color(0xFFEDEEF3),
-                    borderRadius: BorderRadius.circular(7.25),
+                    color: isSelected ? const Color(0xFF00AEFF) : const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(20),
                     border: isSelected 
-                      ? Border.all(color: const Color(0xFFD5D4DA))
-                      : null,
+                      ? null
+                      : Border.all(color: const Color(0xFFE5E5E5)),
                   ),
                   child: Text(
                     region,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF999999),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: isSelected ? Colors.white : const Color(0xFF666666),
+                      letterSpacing: -0.8,
                     ),
                   ),
                 ),
@@ -173,297 +172,222 @@ class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
     );
   }
 
-  Widget _buildPolicyCard({
-    required String imagePath,
-    required String title,
-    required String subtitle,
-    required String date,
-    bool hasOverlay = false,
-    String? overlayText,
-    String? overlaySubtext,
-    String? overlaySubtext2,
-    String? overlaySubtext3,
-  }) {
+  Widget _buildSearchBar() {
     return Container(
-      width: double.infinity,
+      height: 52,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 이미지 영역
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(15),
-                topRight: Radius.circular(15),
-              ),
-              color: Colors.grey[200],
-            ),
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    topRight: Radius.circular(15),
-                  ),
-                  child: Image.asset(
-                    imagePath,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                if (hasOverlay) ...[
-                  // 오버레이 텍스트들
-                  Positioned(
-                    top: 20,
-                    left: 20,
-                    child: Text(
-                      overlayText ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 27.5,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFFD7D7D6),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 20,
-                    left: 100,
-                    child: Text(
-                      overlaySubtext ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 35,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFFCFB902),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 20,
-                    left: 230,
-                    child: Text(
-                      overlaySubtext2 ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 37.4,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFFE3E3E2),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 70,
-                    left: 20,
-                    child: Text(
-                      overlaySubtext3 ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 22.7,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFD7D7D6),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          
-          // 텍스트 영역
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF333333),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF666666),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    date,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF999999),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        border: Border.all(color: const Color(0xFFE5E5E5)),
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3)
+          )
         ],
+      ),
+      child: TextField(
+        focusNode: _searchFocusNode,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        style: const TextStyle(
+          fontSize: 16,
+          letterSpacing: -0.8,
+          color: Color(0xFF333333),
+        ),
+        decoration: const InputDecoration(
+          hintText: '정책 검색',
+          hintStyle: TextStyle(
+            fontSize: 16,
+            color: Color(0xFF999999),
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.8,
+          ),
+          suffixIcon: Icon(
+            Icons.search_rounded,
+            color: Color(0xFF999999),
+            size: 24,
+          ),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          isDense: true,
+        ),
       ),
     );
   }
 
-
-Widget _buildBottomNavigation() {
-  return SizedBox(
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 80,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildPolicyList() {
+    if (_filteredPolicies.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 60),
+          child: Column(
             children: [
-              _buildNavItem('assets/images/menuHome.png', '홈', false),
-              _buildNavItem('assets/images/menuAD.png', '광고 생성', false),
-              const SizedBox(width: 64), // 마이크 자리 확보
-              _buildNavItem('assets/images/menuAnalysis.png', '분석', false),
-              _buildNavItem('assets/images/menuMypage.png', '마이페이지', false),
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '검색 결과가 없습니다',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                  letterSpacing: -0.8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '다른 검색어나 지역을 선택해보세요',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                  letterSpacing: -0.8,
+                ),
+              ),
             ],
           ),
-        ),
-        Positioned(
-          top: -25,
-          left: 0,
-          right: 0,
-          child: Center(child: _buildMicButton()),
-        ),
-      ],
-    ),
-  );
-}
-
-
-Widget _buildNavItem(String imagePath, String label, bool isSelected) {
-  return GestureDetector(
-    onTap: () {
-      if (label == '광고 생성') {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => AdCreationPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
-      } else if (label == '분석') {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => RevenueAnalysisPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
-      } else if (label == '마이페이지') {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => MyPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
-      }
-    },
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Opacity(
-          opacity: isSelected ? 1.0 : 0.55,
-          child: Image.asset(
-            imagePath,
-            width: 24,
-            height: 24,
-            fit: BoxFit.contain,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? const Color(0xFF333333) : Colors.grey[600],
-              letterSpacing: -0.8
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildMicButton() {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const AiChatPage(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
         ),
       );
-    },
-    child: Stack(
-      alignment: Alignment.center,
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 74,
-          height: 74,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.95),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 10, offset: const Offset(0, 6)),
+        Text(
+          '검색 결과 (${_filteredPolicies.length}건)',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF333333),
+            letterSpacing: -0.8,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ..._filteredPolicies.map((policy) {
+          return _buildPolicyCard(
+            title: policy['title'] as String,
+            description: policy['description'] as String,
+            date: policy['date'] as String,
+            url: policy['url'] as String,
+            category: policy['category'] as String,
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildPolicyCard({
+    required String title,
+    required String description,
+    required String date,
+    required String url,
+    required String category,
+  }) {
+    return GestureDetector(
+      onTap: () => _launchUrl(url),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F8FF),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFE1F0FF)),
+                    ),
+                    child: Text(
+                      category,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF00AEFF),
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    date,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF999999),
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF333333),
+                  letterSpacing: -0.8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF666666),
+                  letterSpacing: -0.8,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.open_in_new,
+                    size: 16,
+                    color: Color(0xFF00AEFF),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '자세히 보기',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF00AEFF),
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
-        Container(
-          width: 64,
-          height: 64,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-          ),
-          foregroundDecoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [Colors.black.withOpacity(0.01), Colors.transparent],
-              stops: const [0.9, 1.0],
-            ),
-          ),
-        ),
-        Image.asset('assets/images/navMic.png', width: 30, height: 30, fit: BoxFit.contain),
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {
+      throw Exception('Could not launch $url');
+    }
+  }
 
 } 

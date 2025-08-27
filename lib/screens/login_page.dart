@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -18,9 +19,7 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 200),
                   Center(
                     child: ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFF00AEFF), Color(0xFF0084FF)],
-                      ).createShader(bounds),
+                      shaderCallback: (bounds) => CommonStyles.brandGradient.createShader(bounds),
                       child: Text(
                         'MyBiz',
                         style: GoogleFonts.inter(
@@ -63,10 +62,7 @@ class LoginPage extends StatelessWidget {
                     Text(
                       '소셜 로그인',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.8,
+                      style: CommonStyles.titleStyle.copyWith(
                         color: const Color(0xFF6B6A6F),
                       ),
                     ),

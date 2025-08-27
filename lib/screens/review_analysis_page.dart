@@ -8,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/image_upload_service.dart';
 import 'capture_tutorial_page.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class ReviewAnalysisPage extends StatefulWidget {
   const ReviewAnalysisPage({super.key});
@@ -23,15 +26,25 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
   double _uploadProgress = 0.0;
   String? _uploadError;
 
-  /// 분석 영역 노출 여부 (업로드 성공 후 true)
-  bool _analysisReady = false;
+  // 분석 결과 데이터 (실제로는 API에서 받아올 데이터)
+  Map<String, dynamic> _analysisData = {
+    'positivePercentage': 75,
+    'neutralPercentage': 15,
+    'negativePercentage': 10,
+    'positivePoints': [
+      {'label': '친절한 서비스', 'percentage': 92},
+      {'label': '신선한 재료', 'percentage': 81},
+      {'label': '넓고 쾌적한 공간', 'percentage': 87},
+    ],
+    'negativePoints': [
+      {'label': '부족한 주차공간', 'percentage': 23},
+      {'label': '적은 음식양', 'percentage': 19},
+      {'label': '긴 대기시간', 'percentage': 12},
+    ],
+  };
 
   // 브랜드 그라데이션(버튼/포커스 컬러 통일)
-  static const LinearGradient _brandGrad = LinearGradient(
-    colors: [Color(0xFF00AEFF), Color(0xFF0084FF)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
+  static const LinearGradient _brandGrad = CommonStyles.brandGradient;
 
   void _showGuideImage() {
     showDialog(
@@ -64,11 +77,14 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: const MainMicFab(),
+      bottomNavigationBar: const MainBottomNavBar(selectedIndex: 2),
       backgroundColor: const Color(0xFFF4F5FA),
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            const MainHeader(title: '리뷰 분석'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -78,67 +94,24 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
                     _buildAnalysisTypeButtons(),
                     const SizedBox(height: 24),
 
-                    /// 1) 업로드 섹션(맨 위)
-                    _buildImageUploadSection(),
+                    /// 1) 기본 분석 결과 먼저 표시
+                    _buildCustomerSatisfactionAnalysis(),
+                    const SizedBox(height: 24),
+                    _buildPositivePoints(),
+                    const SizedBox(height: 24),
+                    _buildNegativePoints(),
+                    const SizedBox(height: 24),
 
-                    /// 2) 버튼 눌러 업로드 성공해야 분석 섹션 노출
-                    if (_analysisReady) ...[
-                      const SizedBox(height: 24),
-                      _buildCustomerSatisfactionAnalysis(),
-                      const SizedBox(height: 24),
-                      _buildPositivePoints(),
-                      const SizedBox(height: 24),
-                      _buildNegativePoints(),
-                      const SizedBox(height: 40),
-                    ],
+                    /// 2) 이미지 업로드 섹션 (새로운 분석을 위한)
+                    _buildImageUploadSection(),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
-            _buildBottomNavigation(),
+            
           ],
         ),
-      ),
-    );
-  }
-
-  // ========== APP BAR ==========
-  Widget _buildAppBar() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Stack(
-        children: [
-          const Center(
-            child: Text(
-              '분석',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.8,
-                color: Color(0xFF333333),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const MainPage(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-              child: const SizedBox(
-                width: 24,
-                height: 24,
-                child: Icon(Icons.arrow_back_ios, size: 16, color: Color(0xFF333333)),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -151,9 +124,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        
       ),
       child: Row(
         children: [
@@ -199,9 +170,9 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
 
   // ========== 고객 만족도(스택 막대) ==========
   Widget _buildCustomerSatisfactionAnalysis() {
-    final int pos = 75;
-    final int neu = 15;
-    final int neg = 10;
+    final int pos = _analysisData['positivePercentage'];
+    final int neu = _analysisData['neutralPercentage'];
+    final int neg = _analysisData['negativePercentage'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,6 +231,8 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
 
   // ========== 이런 점이 좋아요! ==========
   Widget _buildPositivePoints() {
+    final List<Map<String, dynamic>> points = _analysisData['positivePoints'];
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: const Color(0xFFFEFEFE), borderRadius: BorderRadius.circular(15)),
@@ -271,14 +244,16 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: -0.8, color: Color(0xFF333333)),
           ),
           const SizedBox(height: 20),
-          _buildPointItem('친절한 서비스', 92,
-              slotColor: const Color(0xFFF2F6FF), fillColor: const Color(0xFFE1EBFF), textColor: const Color(0xFF1E2A44)),
-          const SizedBox(height: 8),
-          _buildPointItem('신선한 재료', 81,
-              slotColor: const Color(0xFFF2F6FF), fillColor: const Color(0xFFE1EBFF), textColor: const Color(0xFF1E2A44)),
-          const SizedBox(height: 8),
-          _buildPointItem('넓고 쾌적한 공간', 87,
-              slotColor: const Color(0xFFF2F6FF), fillColor: const Color(0xFFE1EBFF), textColor: const Color(0xFF1E2A44)),
+          ...points.map((point) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildPointItem(
+              point['label'], 
+              point['percentage'],
+              slotColor: const Color(0xFFF2F6FF), 
+              fillColor: const Color(0xFFE1EBFF), 
+              textColor: const Color(0xFF1E2A44)
+            ),
+          )).toList(),
         ],
       ),
     );
@@ -286,6 +261,8 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
 
   // ========== 이런 점이 아쉬워요! ==========
   Widget _buildNegativePoints() {
+    final List<Map<String, dynamic>> points = _analysisData['negativePoints'];
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
@@ -297,11 +274,10 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: -0.8, color: Color(0xFF333333)),
           ),
           const SizedBox(height: 20),
-          _buildPointItem('부족한 주차공간', 23),
-          const SizedBox(height: 8),
-          _buildPointItem('적은 음식양', 19),
-          const SizedBox(height: 8),
-          _buildPointItem('긴 대기시간', 12),
+          ...points.map((point) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildPointItem(point['label'], point['percentage']),
+          )).toList(),
         ],
       ),
     );
@@ -546,7 +522,6 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
         setState(() {
           _selectedImages.addAll(validImages);
           _uploadError = null;
-          _analysisReady = false; // 새로 선택하면 다시 분석 필요
         });
       }
     } catch (e) {
@@ -559,7 +534,6 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
-      _analysisReady = false; // 변경 시 분석 초기화
     });
   }
 
@@ -583,10 +557,28 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
         (progress) => setState(() => _uploadProgress = progress),
       );
 
+      // 새로운 분석 결과로 데이터 업데이트 (실제로는 API 응답을 받아와야 함)
       setState(() {
         _isUploading = false;
         _uploadProgress = 1.0;
-        _analysisReady = true; // ✅ 이제 분석 섹션 보이기
+        
+        // 새로운 분석 결과로 데이터 업데이트
+        _analysisData = {
+          'positivePercentage': 78, // 업데이트된 데이터
+          'neutralPercentage': 12,
+          'negativePercentage': 10,
+          'positivePoints': [
+            {'label': '친절한 서비스', 'percentage': 95},
+            {'label': '신선한 재료', 'percentage': 88},
+            {'label': '넓고 쾌적한 공간', 'percentage': 92},
+            {'label': '빠른 서비스', 'percentage': 85},
+          ],
+          'negativePoints': [
+            {'label': '부족한 주차공간', 'percentage': 18},
+            {'label': '적은 음식양', 'percentage': 15},
+            {'label': '긴 대기시간', 'percentage': 8},
+          ],
+        };
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -596,7 +588,6 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
       setState(() {
         _isUploading = false;
         _uploadError = e.toString();
-        _analysisReady = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('업로드 실패: $e'), backgroundColor: Colors.red),
@@ -605,7 +596,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
   }
 
   // ========== Bottom Nav ==========
-  Widget _buildBottomNavigation() {
+  Widget _buildBottomNavigation_REMOVED() {
     return SizedBox(
       child: Stack(
         clipBehavior: Clip.none,
@@ -628,7 +619,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
               ],
             ),
           ),
-          Positioned(top: -25, left: 0, right: 0, child: Center(child: _buildMicButton())),
+          Positioned(top: -25, left: 0, right: 0, child: Center(child: SizedBox())), 
         ],
       ),
     );
@@ -688,7 +679,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withOpacity(0.95),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 10, offset: const Offset(0, 6))],
+              
             ),
           ),
           Container(width: 64, height: 64, decoration: const BoxDecoration(shape: BoxShape.circle, 

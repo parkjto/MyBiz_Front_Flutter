@@ -7,6 +7,11 @@ import 'review_analysis_page.dart';
 import 'government_policy_page.dart';
 import 'mypage.dart';
 import 'ai_chat_page.dart';
+import 'inquiry_detail_page.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/main_page_layout.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class InquiryPage extends StatefulWidget {
   const InquiryPage({super.key});
@@ -16,12 +21,40 @@ class InquiryPage extends StatefulWidget {
 }
 
 class _InquiryPageState extends State<InquiryPage> {
-  bool _isInquiryHistory = true; // true: 문의내역, false: 문의하기
-  String _selectedInquiryType = '선택'; // 선택된 문의 종류
+  bool _isInquiryHistory = true;
+  String _selectedInquiryType = '선택';
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   
   final List<String> _inquiryTypes = ['선택', '개인정보 문의', '이용 문의', '불만/불평사항 문의', '기타'];
+
+  // 문의 내역 데이터
+  final List<Map<String, dynamic>> _inquiries = [
+    {
+      'title': '업종 변경 문의',
+      'status': '답변 대기',
+      'isCompleted': false,
+      'content': '현재 등록된 업종을 변경하고 싶습니다. 어떻게 해야 하나요?',
+      'answer': '',
+      'date': '2025.01.15',
+    },
+    {
+      'title': '계정 삭제 문의',
+      'status': '답변 완료',
+      'isCompleted': true,
+      'content': '계정을 완전히 삭제하고 싶습니다. 개인정보는 어떻게 처리되나요?',
+      'answer': '계정 삭제 시 모든 개인정보는 즉시 삭제되며, 복구가 불가능합니다. 삭제 전 중요한 데이터를 백업해주세요.',
+      'date': '2025.01.10',
+    },
+    {
+      'title': '리뷰 분석 기능 문의',
+      'status': '답변 완료',
+      'isCompleted': true,
+      'content': '리뷰 분석 기능이 제대로 작동하지 않습니다. 이미지를 업로드했는데 분석이 안 돼요.',
+      'answer': '이미지 형식과 크기를 확인해주세요. JPG, PNG, WEBP 형식이며 최대 10MB까지 지원합니다. 문제가 지속되면 고객센터로 연락해주세요.',
+      'date': '2025.01.08',
+    },
+  ];
 
   @override
   void dispose() {
@@ -44,155 +77,84 @@ class _InquiryPageState extends State<InquiryPage> {
         );
         return false;
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF4F5FA),
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTabButtons(),
-                      const SizedBox(height: 24),
-                      _isInquiryHistory ? _buildInquiryHistory() : _buildInquiryForm(),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
+      child: MainPageLayout(
+        selectedIndex: 3,
+        child: Column(
+          children: [
+            const MainHeader(title: '문의사항'),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTabButtons(),
+                    const SizedBox(height: CommonStyles.sectionGap),
+                    _isInquiryHistory ? _buildInquiryHistory() : _buildInquiryForm(),
+                    const SizedBox(height: 100), // 네비게이션 바 높이만큼 여백 추가
+                  ],
                 ),
               ),
-              _buildBottomNavigation(),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  
-
-  Widget _buildAppBar() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Stack(
-        children: [
-          const Center(
-            child: Text(
-              '문의사항',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF333333),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const MyPage(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-              child: Container(
-                width: 8,
-                height: 16,
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 16,
-                  color: Color(0xFF333333),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildTabButtons() {
     return Container(
-      height: 60,
+      height: 56,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEFEFE),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isInquiryHistory = true;
-                });
-              },
+              onTap: () => setState(() => _isInquiryHistory = true),
               child: Container(
-                height: 60,
+                height: double.infinity,
                 decoration: BoxDecoration(
-                  color: _isInquiryHistory ? null : Colors.transparent,
-                  gradient: _isInquiryHistory
-                      ? const LinearGradient(
-                          colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(7.5),
+                  color: _isInquiryHistory ? null : Colors.white,
+                  gradient: _isInquiryHistory ? CommonStyles.brandGradient : null,
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: Center(
                   child: Text(
-                    '문의 내역',
-                    style: GoogleFonts.inter(
+                    '문의내역',
+                    style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: _isInquiryHistory
-                          ? const Color(0xFFFFFFFF)
-                          : const Color(0xFF999999),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.8,
+                      color: _isInquiryHistory ? Colors.white : const Color(0xFF999999),
                     ),
                   ),
                 ),
               ),
             ),
           ),
+          const SizedBox(width: 6),
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isInquiryHistory = false;
-                });
-              },
+              onTap: () => setState(() => _isInquiryHistory = false),
               child: Container(
-                height: 60,
+                height: double.infinity,
                 decoration: BoxDecoration(
-                  color: !_isInquiryHistory ? null : Colors.transparent,
-                  gradient: !_isInquiryHistory
-                      ? const LinearGradient(
-                          colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(7.5),
+                  color: !_isInquiryHistory ? null : Colors.white,
+                  gradient: !_isInquiryHistory ? CommonStyles.brandGradient : null,
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: Center(
                   child: Text(
                     '문의하기',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: !_isInquiryHistory
-                          ? const Color(0xFFFFFFFF)
-                          : const Color(0xFF999999),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.8,
+                      color: !_isInquiryHistory ? Colors.white : const Color(0xFF999999),
                     ),
                   ),
                 ),
@@ -205,57 +167,252 @@ class _InquiryPageState extends State<InquiryPage> {
   }
 
   Widget _buildInquiryHistory() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 5),
-        _buildInquiryItem('업종 변경 문의', '답변 대기', false),
-        const SizedBox(height: 12),
-        _buildInquiryItem('계정 삭제 문의', '답변 완료', true),
-      ],
+    return Container(
+      padding: CommonStyles.sectionPadding,
+      decoration: CommonStyles.sectionBox(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '문의내역',
+            style: CommonStyles.titleStyle,
+          ),
+          const SizedBox(height: 12),
+          ..._inquiries.asMap().entries.map((entry) {
+            final index = entry.key;
+            final inquiry = entry.value;
+            final isLast = index == _inquiries.length - 1;
+            return _buildInquiryItem(
+              inquiry['title'],
+              inquiry['status'],
+              inquiry['isCompleted'],
+              inquiry['content'],
+              inquiry['answer'],
+              inquiry['date'],
+              showDivider: !isLast,
+            );
+          }).toList(),
+        ],
+      ),
     );
   }
 
-  Widget _buildInquiryItem(String title, String status, bool isCompleted) {
-    return Container(
-      width: double.infinity,
-      height: 45,
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-        borderRadius: BorderRadius.circular(5),
-        color: const Color(0xFFFFFFFF),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16),
+  Widget _buildInquiryItem(String title, String status, bool isCompleted, String content, String answer, String date, {bool showDivider = false}) {
+    final row = GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => InquiryDetailPage(
+              title: title,
+              status: status,
+              isCompleted: isCompleted,
+              content: content,
+              answer: answer,
+              date: date,
+            ),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+        color: Colors.white,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF333333),
+                  letterSpacing: -0.8,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
               child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF000000),
+                alignment: Alignment.centerRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isCompleted ? const Color(0xFF2D6EFF).withOpacity(0.1) : const Color(0xFF848484).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isCompleted ? const Color(0xFF2D6EFF).withOpacity(0.3) : const Color(0xFF848484).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isCompleted ? const Color(0xFF2D6EFF) : const Color(0xFF848484),
+                      letterSpacing: -0.8,
+                    ),
                   ),
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+    if (!showDivider) return row;
+    return Column(children: [row, CommonStyles.divider()]);
+  }
+
+  Widget _buildInquiryForm() {
+    return Container(
+      padding: CommonStyles.sectionPadding,
+      decoration: CommonStyles.sectionBox(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '문의하기',
+            style: CommonStyles.titleStyle,
           ),
-          Expanded(
-            flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Align(
-                alignment: Alignment.centerRight,
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _selectedInquiryType,
+            decoration: InputDecoration(
+              labelText: '문의 종류',
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF666666),
+                letterSpacing: -0.8,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF00C2FD)),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8F9FA),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            items: _inquiryTypes.map((String type) {
+              return DropdownMenuItem<String>(
+                value: type,
                 child: Text(
-                  status,
+                  type,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w400,
-                    color: isCompleted ? const Color(0xFF2D6EFF) : const Color(0xFF848484),
+                    color: type == '선택' ? const Color(0xFF999999) : const Color(0xFF333333),
+                    letterSpacing: -0.8,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedInquiryType = newValue!;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _titleController,
+            decoration: InputDecoration(
+              labelText: '제목',
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF666666),
+                letterSpacing: -0.8,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF00C2FD)),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8F9FA),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _contentController,
+            maxLines: 5,
+            decoration: InputDecoration(
+              labelText: '내용',
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF666666),
+                letterSpacing: -0.8,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF00C2FD)),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8F9FA),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: CommonStyles.brandGradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  // 문의 제출 로직
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('문의가 제출되었습니다')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  '문의 제출',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: -0.8,
                   ),
                 ),
               ),
@@ -265,366 +422,4 @@ class _InquiryPageState extends State<InquiryPage> {
       ),
     );
   }
-
-  Widget _buildInquiryForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [        
-        // 문의 종류 선택
-        Text(
-          '문의 종류',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF333333),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE5E5E5)),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedInquiryType,
-              isExpanded: true,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              items: _inquiryTypes.map((String type) {
-                return DropdownMenuItem<String>(
-                  value: type,
-                  child: Text(
-                    type,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedInquiryType = newValue!;
-                });
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        //문의 제목
-        Text(
-          '문의 제목',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF333333),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE5E5E5)),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(
-              hintText: '문의 제목을 적어주세요.',
-              hintStyle: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF999999),
-              ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        // 문의 내용
-        Text(
-          '문의 내용',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF333333),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 120,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE5E5E5)),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: TextField(
-            controller: _contentController,
-            maxLines: null,
-            expands: true,
-            decoration: const InputDecoration(
-              hintText: '문의 내용을 적어주세요.',
-              hintStyle: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF999999),
-              ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
-            ),
-          ),
-        ),
-        const SizedBox(height: 15),
-        
-        // 안내 문구
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8F9FA),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Text(
-            '문의사항을 남겨주시면 빠른 시일 내 확인 후 답장드리겠습니다.',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF666666),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 5),
-        
-        // 버튼들
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  // 문의취소 로직
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const InquiryPage(),
-                      transitionDuration: Duration.zero,
-                      reverseTransitionDuration: Duration.zero,
-                    ),
-                  );
-                },
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '문의취소',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF000000),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  // 문의등록 로직
-                  // 여기에 실제 문의등록 로직을 추가하세요
-                },
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '문의등록',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFFFFFFFF),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-
-
-Widget _buildBottomNavigation() {
-  return SizedBox(
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 80,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _buildNavItem('assets/images/menuHome.png', '홈', false),
-              _buildNavItem('assets/images/menuAD.png', '광고 생성', false),
-              const SizedBox(width: 64), // 마이크 자리 확보
-              _buildNavItem('assets/images/menuAnalysis.png', '분석', false),
-              _buildNavItem('assets/images/menuMypage.png', '마이페이지', true),
-            ],
-          ),
-        ),
-        Positioned(
-          top: -25,
-          left: 0,
-          right: 0,
-          child: Center(child: _buildMicButton()),
-        ),
-      ],
-    ),
-  );
-}
-
-
-Widget _buildNavItem(String imagePath, String label, bool isSelected) {
-  return GestureDetector(
-    onTap: () {
-      if (label == '광고 생성') {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => AdCreationPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
-      } else if (label == '분석') {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => RevenueAnalysisPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
-      } else if (label == '마이페이지') {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => MyPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
-      }
-    },
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Opacity(
-          opacity: isSelected ? 1.0 : 0.55,
-          child: Image.asset(
-            imagePath,
-            width: 24,
-            height: 24,
-            fit: BoxFit.contain,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? const Color(0xFF333333) : Colors.grey[600],
-              letterSpacing: -0.8
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildMicButton() {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const AiChatPage(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ),
-      );
-    },
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 74,
-          height: 74,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.95),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 10, offset: const Offset(0, 6)),
-            ],
-          ),
-        ),
-        Container(
-          width: 64,
-          height: 64,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-          ),
-          foregroundDecoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [Colors.black.withOpacity(0.01), Colors.transparent],
-              stops: const [0.9, 1.0],
-            ),
-          ),
-        ),
-        Image.asset('assets/images/navMic.png', width: 30, height: 30, fit: BoxFit.contain),
-      ],
-    ),
-  );
-}
-
 }

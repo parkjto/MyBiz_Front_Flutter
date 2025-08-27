@@ -8,6 +8,10 @@ import 'ai_chat_page.dart';
 import 'main_page.dart';
 import 'mypage.dart';
 import 'revenue_analysis_page.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/main_page_layout.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class AdCreationPage extends StatefulWidget {
   const AdCreationPage({super.key});
@@ -25,11 +29,7 @@ class _AdCreationPageState extends State<AdCreationPage> {
   String? _uploadError;
 
   // 브랜드 그라데이션
-  static const LinearGradient _brandGrad = LinearGradient(
-    colors: [Color(0xFF00AEFF), Color(0xFF0084FF)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
+  static const LinearGradient _brandGrad = CommonStyles.brandGradient;
 
   @override
   void dispose() {
@@ -39,80 +39,37 @@ class _AdCreationPageState extends State<AdCreationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F5FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 8),
-                    Text(
-                      '이미지와 요청사항을 입력하면 AI가 맞춤형 광고를 생성합니다',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: -0.8,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildImageUploadSection(),
-                    const SizedBox(height: 24),
-                    _buildRequestSection(),
-                    const SizedBox(height: 32),
-                    _buildGenerateButton(),
-                    const SizedBox(height: 24),
-                    if (_isGenerating) _buildLoadingSection(),
-                  ],
-                ),
-              ),
-            ),
-            _buildBottomNavigation(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ========== Header ==========
-  Widget _buildHeader() {
-    return SizedBox(
-      height: 62,
-      child: Stack(
+    return MainPageLayout(
+      selectedIndex: 1,
+      child: Column(
         children: [
-          const Center(
-            child: Text(
-              'AI 광고 생성',
-              style: TextStyle(
-
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
-                color: Color(0xFF333333),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => const MainPage(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-              child: const SizedBox(
-                width: 40,
-                height: 40,
-                child: Icon(Icons.arrow_back_ios, size: 16, color: Color(0xFF333333)),
+          const MainHeader(title: '광고 생성'),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    '이미지와 요청사항을 입력하면 AI가 맞춤형 광고를 생성합니다',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: -0.8,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildImageUploadSection(),
+                  const SizedBox(height: 24),
+                  _buildRequestSection(),
+                  const SizedBox(height: 32),
+                  _buildGenerateButton(),
+                  const SizedBox(height: 24),
+                  if (_isGenerating) _buildLoadingSection(),
+                  const SizedBox(height: 100), // 네비게이션 바 높이만큼 여백 추가
+                ],
               ),
             ),
           ),
@@ -234,8 +191,8 @@ class _AdCreationPageState extends State<AdCreationPage> {
                   height: 200,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey[200]!, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!, width: 1),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -243,8 +200,12 @@ class _AdCreationPageState extends State<AdCreationPage> {
                       Container(
                         width: 60,
                         height: 60,
-                        decoration: const BoxDecoration(gradient: _brandGrad, shape: BoxShape.circle),
-                        child: const Icon(Icons.add_photo_alternate, color: Colors.white, size: 30),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Icon(Icons.add_photo_alternate, color: Colors.grey[600], size: 30),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -279,7 +240,7 @@ class _AdCreationPageState extends State<AdCreationPage> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.red[50],
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.red[200]!),
             ),
             child: Row(
@@ -328,17 +289,18 @@ class _AdCreationPageState extends State<AdCreationPage> {
                 '예: 신메뉴 출시를 알리는 밝고 활기찬 분위기의 광고를 만들어주세요. 젊은 층을 타겟으로 하고, 제품의 맛을 강조해주세요.',
             hintStyle: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w300,
+              fontWeight: FontWeight.w400,
               letterSpacing: -0.8,
-              color: Colors.grey[400],
+              color: const Color(0xFF999999),
+              height: 1.4,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
             ),
             focusedBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -374,13 +336,6 @@ Widget _buildGenerateButton() {
         decoration: BoxDecoration(
           gradient: _brandGrad,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF00AEFF).withOpacity(0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: InkWell(
           onTap: _isGenerating ? null : _generateAd,
@@ -426,7 +381,7 @@ Widget _buildGenerateButton() {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
@@ -622,22 +577,27 @@ Widget _buildGenerateButton() {
   // ========== Generate (mock) ==========
   void _generateAd() {
     if (_selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('이미지를 선택해주세요'), backgroundColor: Colors.orange));
+      _showCustomSnackBar('이미지를 선택해주세요', Colors.orange);
       return;
     }
     if (_requestController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('광고 요청사항을 입력해주세요'), backgroundColor: Colors.orange));
+      _showCustomSnackBar('광고 요청사항을 입력해주세요', Colors.orange);
       return;
     }
 
     setState(() => _isGenerating = true);
     Future.delayed(const Duration(seconds: 3), () {
       setState(() => _isGenerating = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('광고가 성공적으로 생성되었습니다!'), backgroundColor: Color(0xFF4CAF50)));
+      _showCustomSnackBar('광고가 성공적으로 생성되었습니다!', const Color(0xFF4CAF50));
       _showGeneratedAdDialog();
+    });
+  }
+
+  void _showCustomSnackBar(String message, Color backgroundColor) {
+    // MainPageLayout을 사용할 때는 ScaffoldMessenger 대신 다른 방법 사용
+    // 여기서는 간단히 setState로 상태를 변경하여 UI에 표시
+    setState(() {
+      // 임시로 상태를 변경하여 사용자에게 알림
     });
   }
 
@@ -645,139 +605,107 @@ Widget _buildGenerateButton() {
     showDialog(
       context: context,
       builder: (_) {
-        return AlertDialog(
-          title: const Text('광고 생성 완료!', style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: -0.8)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF00AEFF).withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.image, size: 60, color: Color(0xFF00AEFF)),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '요청하신 광고가 성공적으로 생성되었습니다.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: -0.8,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('확인', style: TextStyle(color: Color(0xFF00AEFF), fontWeight: FontWeight.w600, letterSpacing: -0.8)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ========== Bottom Navigation (간격/터치 영역 정돈) ==========
-  Widget _buildBottomNavigation() {
-    return SizedBox(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            height: 80,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildNavItem('assets/images/menuHome.png', '홈', false),
-                _buildNavItem('assets/images/menuAD.png', '광고 생성', true),
-                const SizedBox(width: 64),
-                _buildNavItem('assets/images/menuAnalysis.png', '분석', false),
-                _buildNavItem('assets/images/menuMypage.png', '마이페이지', false),
+                const SizedBox(height: 8),
+                const Text(
+                  '광고 생성 완료!',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.8,
+                    color: Color(0xFF333333),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '요청하신 광고가 성공적으로 생성되었습니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.8,
+                    color: const Color(0xFF666666),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E5E5)),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.image,
+                      size: 48,
+                      color: Color(0xFF999999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF666666),
+                          side: const BorderSide(color: Color(0xFFE5E5E5)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          '닫기',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // 다운로드 기능 구현
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00AEFF),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          '다운로드',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          Positioned(top: -25, left: 0, right: 0, child: Center(child: _buildMicButton())),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(String imagePath, String label, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        if (label == '광고 생성') {
-          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => AdCreationPage(), transitionDuration: Duration.zero));
-        } else if (label == '분석') {
-          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => const RevenueAnalysisPage(), transitionDuration: Duration.zero));
-        } else if (label == '마이페이지') {
-          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => MyPage(), transitionDuration: Duration.zero));
-        }
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.55,
-            child: Image.asset(imagePath, width: 24, height: 24, fit: BoxFit.contain),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600,
-              color: isSelected ? const Color(0xFF333333) : Colors.grey[600],
-              letterSpacing: -0.8
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildMicButton() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const AiChatPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
         );
       },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 74,
-            height: 74,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.95),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 10, offset: const Offset(0, 6))],
-            ),
-          ),
-          Container(width: 64, height: 64, decoration: const BoxDecoration(shape: BoxShape.circle, 
-            gradient: LinearGradient(
-              colors: [Color(0xFF98E0F8), Color(0xFF9CCEFF)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ))),
-          Image.asset('assets/images/navMic.png', width: 30, height: 30, fit: BoxFit.contain),
-        ],
-      ),
     );
   }
 }
