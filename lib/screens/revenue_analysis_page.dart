@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 import 'main_page.dart';
 import 'ad_creation_page.dart';
 import 'mypage.dart';
@@ -18,7 +19,8 @@ class RevenueAnalysisPage extends StatefulWidget {
   State<RevenueAnalysisPage> createState() => _RevenueAnalysisPageState();
 }
 
-class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
+class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
+    with TickerProviderStateMixin {
   String _selectedYear = '2025';
   String _selectedMonth = '9';
   
@@ -27,12 +29,89 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
   final List<String> _years = ['2024', '2025'];
   final List<String> _months = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   
+  // 애니메이션 컨트롤러들
+  AnimationController? _chartAnimationController;
+  AnimationController? _counterAnimationController;
+  
+  // 애니메이션 값들
+  Animation<double>? _chartAnimation;
+  Animation<double>? _counterAnimation;
+  
+  // 카운터 애니메이션용
+  int _displayAmount = 0;
+  final int _targetAmount = 3250000;
+  
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _selectedYear = now.year.toString();
     _selectedMonth = now.month.toString();
+    
+    // 애니메이션 컨트롤러 초기화를 WidgetsBinding.instance.addPostFrameCallback으로 지연
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAnimations();
+    });
+  }
+  
+  void _initializeAnimations() {
+    if (!mounted) return;
+    
+    // 애니메이션 컨트롤러 초기화
+    _chartAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    
+    _counterAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    // 애니메이션 설정
+    _chartAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _chartAnimationController!, curve: Curves.easeOutCubic)
+    );
+    
+    _counterAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _counterAnimationController!, curve: Curves.easeOutCubic)
+    );
+    
+    // 애니메이션 시작
+    _startAnimations();
+    
+    // 카운터 애니메이션 리스너
+    _counterAnimationController!.addListener(() {
+      if (mounted) {
+        setState(() {
+          _displayAmount = (_targetAmount * _counterAnimation!.value).round();
+        });
+      }
+    });
+    
+    // setState 호출하여 위젯 재빌드
+    setState(() {});
+  }
+  
+  void _startAnimations() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted && _chartAnimationController != null) {
+        _chartAnimationController!.forward();
+      }
+    });
+    
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted && _counterAnimationController != null) {
+        _counterAnimationController!.forward();
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _chartAnimationController?.dispose();
+    _counterAnimationController?.dispose();
+    super.dispose();
   }
   
   @override
@@ -67,7 +146,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
         
       ),
       child: Row(
@@ -79,7 +158,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
                 height: double.infinity,
                 decoration: BoxDecoration(
                   gradient: _brandGrad,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
                 child: Center(
                   child: Text(
@@ -87,7 +166,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: Colors.white,
                     ),
                   ),
@@ -112,7 +191,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
                 height: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
                 child: Center(
                   child: Text(
@@ -120,7 +199,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: const Color(0xFF999999),
                     ),
                   ),
@@ -140,8 +219,15 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: BorderRadius.circular(CommonStyles.dialogRadius),
         border: Border.all(color: const Color(0xFFFCFCFD)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,15 +244,34 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
           const SizedBox(height: 2),
           Row(
             children: [
-              Text(
-                '3,250,000원',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.8,
-                  color: const Color(0xFF333333),
-                ),
-              ),
+              // 숫자 카운팅 애니메이션
+              _counterAnimation != null
+                ? AnimatedBuilder(
+                    animation: _counterAnimation!,
+                    builder: (context, child) {
+                      return Text(
+                        '${_displayAmount.toString().replaceAllMapped(
+                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                          (Match m) => '${m[1]},'
+                        )}원',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.8,
+                          color: const Color(0xFF333333),
+                        ),
+                      );
+                    },
+                  )
+                : Text(
+                    '3,250,000원',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.8,
+                      color: const Color(0xFF333333),
+                    ),
+                  ),
               const Spacer(),
               Text(
                 '지난달 대비 +28%',
@@ -184,13 +289,28 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage> {
           SizedBox(
             height: 220,
             width: double.infinity,
-            child: _RevenueLineChart(
-              data: weekly,
-              lineColor: const Color(0xFF63B8F6),
-              fillColor: const Color(0xFF98E0F8).withOpacity(0.25),
-              gridColor: const Color(0xFFE9EEF3),
-              dotColor: const Color(0xFF63B8F6),
-            ),
+            child: _chartAnimation != null
+              ? AnimatedBuilder(
+                  animation: _chartAnimation!,
+                  builder: (context, child) {
+                    return _RevenueLineChart(
+                      data: weekly,
+                      lineColor: const Color(0xFF63B8F6),
+                      fillColor: const Color(0xFF98E0F8).withOpacity(0.25),
+                      gridColor: const Color(0xFFE9EEF3),
+                      dotColor: const Color(0xFF63B8F6),
+                      animationValue: _chartAnimation!.value,
+                    );
+                  },
+                )
+              : _RevenueLineChart(
+                  data: weekly,
+                  lineColor: const Color(0xFF63B8F6),
+                  fillColor: const Color(0xFF98E0F8).withOpacity(0.25),
+                  gridColor: const Color(0xFFE9EEF3),
+                  dotColor: const Color(0xFF63B8F6),
+                  animationValue: 1.0,
+                ),
           ),
           const SizedBox(height: 8),
 
@@ -294,14 +414,14 @@ class _PillPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
       onTap: onTap,
       child: Container(
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
           border: Border.all(color: const Color(0xFFE1E6EC)),
 
         ),
@@ -331,6 +451,7 @@ class _RevenueLineChart extends StatelessWidget {
   final Color fillColor;
   final Color gridColor;
   final Color dotColor;
+  final double animationValue;
 
   const _RevenueLineChart({
     required this.data,
@@ -338,6 +459,7 @@ class _RevenueLineChart extends StatelessWidget {
     required this.fillColor,
     required this.gridColor,
     required this.dotColor,
+    required this.animationValue,
   });
 
   @override
@@ -350,6 +472,7 @@ class _RevenueLineChart extends StatelessWidget {
           fillColor: fillColor,
           gridColor: gridColor,
           dotColor: dotColor,
+          animationValue: animationValue,
         ),
       ),
     );
@@ -359,6 +482,7 @@ class _RevenueLineChart extends StatelessWidget {
 class _RevenuePainter extends CustomPainter {
   final List<double> data;
   final Color lineColor, fillColor, gridColor, dotColor;
+  final double animationValue;
 
   _RevenuePainter({
     required this.data,
@@ -366,6 +490,7 @@ class _RevenuePainter extends CustomPainter {
     required this.fillColor,
     required this.gridColor,
     required this.dotColor,
+    required this.animationValue,
   });
 
   @override
@@ -398,11 +523,18 @@ class _RevenuePainter extends CustomPainter {
       return Offset(x, y);
     }
 
+    // 애니메이션된 데이터 포인트 계산
+    final animatedData = data.map((value) => value * animationValue).toList();
+
     // line + fill
     final linePath = Path();
     final fillPath = Path();
-    for (int i = 0; i < data.length; i++) {
-      final p = pt(i);
+    for (int i = 0; i < animatedData.length; i++) {
+      final animatedValue = animatedData[i];
+      final x = chart.left + i * dx;
+      final y = chart.bottom - (animatedValue / maxVal) * chart.height;
+      final p = Offset(x, y);
+      
       if (i == 0) {
         linePath.moveTo(p.dx, p.dy);
         fillPath.moveTo(p.dx, chart.bottom);
@@ -415,22 +547,29 @@ class _RevenuePainter extends CustomPainter {
     fillPath.lineTo(chart.right, chart.bottom);
     fillPath.close();
 
-    canvas.drawPath(fillPath, Paint()..color = fillColor);
+    // 애니메이션된 채우기
+    final animatedFillColor = fillColor.withOpacity(fillColor.opacity * animationValue);
+    canvas.drawPath(fillPath, Paint()..color = animatedFillColor);
 
+    // 애니메이션된 라인
     final linePaint = Paint()
-      ..color = lineColor
+      ..color = lineColor.withOpacity(animationValue)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(linePath, linePaint);
 
-    // dots
-    final dotPaint = Paint()..color = dotColor;
-    for (int i = 0; i < data.length; i++) {
-      final p = pt(i);
+    // 애니메이션된 점들
+    final dotPaint = Paint()..color = dotColor.withOpacity(animationValue);
+    for (int i = 0; i < animatedData.length; i++) {
+      final animatedValue = animatedData[i];
+      final x = chart.left + i * dx;
+      final y = chart.bottom - (animatedValue / maxVal) * chart.height;
+      final p = Offset(x, y);
+      
       canvas.drawCircle(p, 4, dotPaint);
-      canvas.drawCircle(p, 2, Paint()..color = Colors.white);
+      canvas.drawCircle(p, 2, Paint()..color = Colors.white.withOpacity(animationValue));
     }
   }
 
@@ -440,5 +579,6 @@ class _RevenuePainter extends CustomPainter {
       old.lineColor != lineColor ||
       old.fillColor != fillColor ||
       old.gridColor != gridColor ||
-      old.dotColor != dotColor;
+      old.dotColor != dotColor ||
+      old.animationValue != animationValue;
 }

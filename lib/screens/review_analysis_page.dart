@@ -51,7 +51,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(CommonStyles.dialogRadius)),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -123,7 +123,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
         
       ),
       child: Row(
@@ -141,7 +141,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
                 );
               },
               child: Container(
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(CommonStyles.cardRadius)),
                 child: const Center(
                   child: Text(
                     '매출 분석',
@@ -154,7 +154,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
           const SizedBox(width: 6),
           Expanded(
             child: Container(
-              decoration: BoxDecoration(gradient: _brandGrad, borderRadius: BorderRadius.circular(15)),
+              decoration: BoxDecoration(gradient: _brandGrad, borderRadius: BorderRadius.circular(CommonStyles.cardRadius)),
               child: const Center(
                 child: Text(
                   '리뷰 분석',
@@ -183,7 +183,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
         ),
         const SizedBox(height: 16),
         Container(
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(CommonStyles.cardRadius)),
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
@@ -235,7 +235,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
     
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFFFEFEFE), borderRadius: BorderRadius.circular(15)),
+      decoration: BoxDecoration(color: const Color(0xFFFEFEFE), borderRadius: BorderRadius.circular(CommonStyles.cardRadius)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

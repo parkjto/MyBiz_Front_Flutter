@@ -38,4 +38,4 @@ flutter:
 
 # Windows 데스크톱 지원
 platforms:
-  windows: 
+  windows:

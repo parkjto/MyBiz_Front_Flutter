@@ -81,7 +81,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
       ),
       child: Row(
         children: [
@@ -101,7 +101,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                 height: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
                 child: Center(
                   child: Text(
@@ -109,7 +109,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: const Color(0xFF999999),
                     ),
                   ),
@@ -125,7 +125,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                 height: double.infinity,
                 decoration: BoxDecoration(
                   gradient: CommonStyles.brandGradient,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
                 child: Center(
                   child: Text(
@@ -133,7 +133,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: Colors.white,
                     ),
                   ),
@@ -164,13 +164,13 @@ class _ScrapingPageState extends State<ScrapingPage> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
                 child: Container(
                   width: double.infinity,
                   height: 15,
@@ -312,7 +312,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,7 +358,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8F9FA),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
               ),
               child: Text(
                 tag,
@@ -394,7 +394,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,7 +429,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,7 +478,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
           height: 6,
           decoration: BoxDecoration(
             color: const Color(0xFFF5F5F5), // 배경색을 더 연하게
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
           ),
           child: FractionallySizedBox(
             alignment: Alignment.centerLeft,
@@ -486,7 +486,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
             child: Container(
               decoration: BoxDecoration(
                 color: isGood ? const Color(0xFFB8E6FF) : const Color(0xFFE0E0E0), // 바 색상을 더 연하게
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
               ),
             ),
           ),
@@ -501,7 +501,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -553,7 +553,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                 backgroundColor: const Color(0xFF00AEFF),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                 ),
                 elevation: 0,
               ),
@@ -626,7 +626,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.red[50],
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
         border: Border.all(color: Colors.red[200]!),
       ),
       child: Column(
@@ -673,7 +673,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                       foregroundColor: Colors.red[600],
                       side: BorderSide(color: Colors.red[300]!),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                       ),
                     ),
                     child: const Text('다시 시도'),
@@ -696,7 +696,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                       backgroundColor: Colors.red[600],
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                       ),
                       elevation: 0,
                     ),
@@ -786,7 +786,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
         height: 74,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

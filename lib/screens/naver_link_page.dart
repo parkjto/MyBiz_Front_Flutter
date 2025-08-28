@@ -25,14 +25,14 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
     static const _titleStyle = TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        letterSpacing: -0.8,
+        letterSpacing: -0.55,
         color: Color(0xFF333333),
     );
     
     static const _subtitleStyle = TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w400,
-        letterSpacing: -0.8,
+        letterSpacing: -0.55,
         color: Color(0xFF777777),
     );
 
@@ -134,7 +134,11 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
             builder: (context) => Dialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 child: Container(
-                    constraints: const BoxConstraints(maxHeight: 500),
+                    constraints: const BoxConstraints(
+                        maxHeight: 500,
+                        maxWidth: 400,
+                        minWidth: 400,
+                    ),
                     padding: const EdgeInsets.all(24),
                     child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -183,7 +187,11 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
             builder: (context) => Dialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 child: Container(
-                    constraints: const BoxConstraints(maxHeight: 500),
+                    constraints: const BoxConstraints(
+                        maxHeight: 500,
+                        maxWidth: 400,
+                        minWidth: 400,
+                    ),
                     padding: const EdgeInsets.all(24),
                     child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -312,6 +320,10 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
             barrierDismissible: true,
             builder: (context) {
                 return AlertDialog(
+                    constraints: const BoxConstraints(
+                        maxWidth: 400,
+                        minWidth: 400,
+                    ),
                     title: Text(
                         type,
                         style: GoogleFonts.inter(
@@ -495,15 +507,15 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                     color: Color(0xFF666666),
                                 ),
                                 border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                                     borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                                     borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                                     borderSide: BorderSide(color: CommonStyles.primaryLightColor, width: 2),
                                 ),
                                 filled: true,
@@ -525,15 +537,15 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                     color: Color(0xFF666666),
                                 ),
                                 border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                                     borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                                     borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                                     borderSide: BorderSide(color: CommonStyles.primaryLightColor, width: 2),
                                 ),
                                 filled: true,

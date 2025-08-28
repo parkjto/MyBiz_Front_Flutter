@@ -56,7 +56,7 @@ class _AdCreationPageState extends State<AdCreationPage> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w300,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: Colors.grey[600],
                     ),
                   ),
@@ -90,7 +90,7 @@ class _AdCreationPageState extends State<AdCreationPage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
+                letterSpacing: -0.55,
                 color: Colors.black87,
               ),
             ),
@@ -485,26 +485,34 @@ Widget _buildGenerateButton() {
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Padding(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  // 헤더
+                  Text(
                     'AI 광고 생성 가이드',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.8,
-                      color: Color(0xFF333333),
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // 가이드 이미지 영역
                   Container(
                     width: double.infinity,
-                    height: 300,
+                    height: 280,
                     decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey[300]!),
                     ),
@@ -512,56 +520,120 @@ Widget _buildGenerateButton() {
                       borderRadius: BorderRadius.circular(12),
                       child: PageView(
                         onPageChanged: (i) => setState(() => currentPage = i),
-                        children: const [
-                          Center(child: Icon(Icons.image, size: 72, color: Colors.grey)),
-                          Center(child: Icon(Icons.image, size: 72, color: Colors.grey)),
+                        children: [
+                          _buildGuidePage(
+                            icon: Icons.upload_file,
+                            title: '이미지 업로드',
+                            description: '광고에 사용할 이미지를\n최대 5장까지 선택하세요',
+                            color: Colors.grey[600]!,
+                          ),
+                          _buildGuidePage(
+                            icon: Icons.auto_awesome,
+                            title: 'AI 생성',
+                            description: 'AI가 이미지를 분석하여\n최적화된 광고를 생성합니다',
+                            color: Colors.grey[600]!,
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00AEFF).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${currentPage + 1}/2',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.8,
-                        color: Color(0xFF00AEFF),
-                      ),
-                    ),
-                  ),
+                  
                   const SizedBox(height: 16),
-                  Text(
-                    '광고 이미지를 업로드하면 AI가 자동으로\n최적화된 광고를 생성해드립니다.\n\n최대 5장까지 선택 가능합니다.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: -0.8,
-                      color: Colors.grey[600],
-                      height: 1.4,
+                  
+                  // 페이지 인디케이터
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(2, (index) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: currentPage == index ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: currentPage == index 
+                            ? const Color(0xFF00AEFF)
+                            : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    }),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // 설명 텍스트
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: const Color(0xFF00AEFF),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '사용 팁',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.8,
+                                color: const Color(0xFF00AEFF),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          '• 고품질 이미지를 사용하면 더 좋은 결과를 얻을 수 있습니다\n• 명확한 요청사항을 입력하면 AI가 더 정확하게 생성합니다\n• 생성된 광고는 언제든지 수정할 수 있습니다',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: -0.8,
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  
                   const SizedBox(height: 20),
+                  
+                  // 확인 버튼
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00AEFF),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        '확인',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: -0.8),
+                    height: 56,
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: _brandGrad,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(12),
+                          child: const Center(
+                            child: Text(
+                              '가이드 확인',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.8,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -571,6 +643,50 @@ Widget _buildGenerateButton() {
           );
         });
       },
+    );
+  }
+
+  // 가이드 페이지 위젯
+  Widget _buildGuidePage({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 48,
+            color: color,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.8,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              letterSpacing: -0.8,
+              color: Colors.grey[600],
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

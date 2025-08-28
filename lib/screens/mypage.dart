@@ -65,17 +65,17 @@ class _MyPageState extends State<MyPage> {
           GestureDetector(
             onTap: () => _launchSmartPlace(),
             child: Container(
-              width: 84,
-              height: 84,
+              width: 70,
+              height: 70,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(42),
+                borderRadius: BorderRadius.circular(35),
                 border: Border.all(
                   color: CommonStyles.borderColor,
                   width: 3,
                 ),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(42),
+                borderRadius: BorderRadius.circular(35),
                 child: Image.asset(
                   'assets/images/profile.png',
                   fit: BoxFit.cover,
@@ -350,7 +350,7 @@ Widget _buildNavItem(String imagePath, String label, bool isSelected) {
             fontSize: 10,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             color: isSelected ? const Color(0xFF333333) : Colors.grey[600],
-              letterSpacing: -0.8
+              letterSpacing: -0.55
           ),
         ),
       ],
@@ -424,7 +424,7 @@ Widget _buildMicButton_REMOVED() {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.55,
                   color: Color(0xFF333333),
                 ),
               ),
@@ -435,7 +435,7 @@ Widget _buildMicButton_REMOVED() {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.55,
                   color: const Color(0xFF666666),
                   height: 1.4,
                 ),

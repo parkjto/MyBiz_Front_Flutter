@@ -117,7 +117,7 @@ class _SignupPageState extends State<SignupPage> {
                       style: GoogleFonts.roboto(
                         fontSize: 52,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -0.8,
+                        letterSpacing: -0.55,
                         color: Colors.white,
                       ),
                     ),
@@ -214,7 +214,7 @@ class _SignupPageState extends State<SignupPage> {
           height: 56,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
             border: Border.all(
               color: hasError ? Colors.red : const Color(0xFFE5E5E5),
               width: hasError ? 2 : 1,
@@ -267,7 +267,7 @@ class _SignupPageState extends State<SignupPage> {
             height: 56,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
               border: Border.all(
                 color: hasError ? Colors.red : const Color(0xFFE5E5E5),
                 width: hasError ? 2 : 1,
@@ -319,7 +319,7 @@ class _SignupPageState extends State<SignupPage> {
           height: 56,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
             border: Border.all(
               color: hasError ? Colors.red : const Color(0xFFE5E5E5),
               width: hasError ? 2 : 1,
@@ -371,7 +371,7 @@ class _SignupPageState extends State<SignupPage> {
           height: 56,
           decoration: BoxDecoration(
             color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
             border: Border.all(
               color: hasError ? Colors.red : const Color(0xFFE5E5E5),
               width: hasError ? 2 : 1,
@@ -416,7 +416,7 @@ class _SignupPageState extends State<SignupPage> {
           height: 56,
           decoration: BoxDecoration(
             color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
             border: Border.all(
               color: hasError ? Colors.red : const Color(0xFFE5E5E5),
               width: hasError ? 2 : 1,
@@ -581,7 +581,7 @@ class _SignupPageState extends State<SignupPage> {
         height: 56,
                         decoration: BoxDecoration(
                   gradient: CommonStyles.brandGradient,
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                 ),
         child: Center(
           child: Text(
@@ -589,7 +589,7 @@ class _SignupPageState extends State<SignupPage> {
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              letterSpacing: -0.8,
+              letterSpacing: -0.55,
               color: Colors.white,
             ),
           ),
@@ -627,6 +627,10 @@ class _SignupPageState extends State<SignupPage> {
       barrierDismissible: true,
       builder: (context) {
         return AlertDialog(
+          constraints: const BoxConstraints(
+            maxWidth: 400,
+            minWidth: 400,
+          ),
           title: Text(
             type,
             style: GoogleFonts.inter(

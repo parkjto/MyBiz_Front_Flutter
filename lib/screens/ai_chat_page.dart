@@ -45,17 +45,17 @@ class _AiChatPageState extends State<AiChatPage>
   static const _brandBlue = Color(0xFF2D6EFF);
 
   static const TextStyle _title18 = TextStyle(
-    fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.8, color: _c333);
+    fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.55, color: _c333);
   static const TextStyle _aiName14 =
-      TextStyle(fontSize: 14, letterSpacing: -0.8, color: _c999);
+      TextStyle(fontSize: 14, letterSpacing: -0.55, color: _c999);
   static const TextStyle _aiText16 =
-      TextStyle(fontSize: 16, letterSpacing: -0.8, color: Colors.white, height: 1.35);
+      TextStyle(fontSize: 16, letterSpacing: -0.55, color: Colors.white, height: 1.35);
   static const TextStyle _userText16 =
-      TextStyle(fontSize: 16, letterSpacing: -0.8, color: Color(0xFF505050), height: 1.35);
+      TextStyle(fontSize: 16, letterSpacing: -0.55, color: Color(0xFF505050), height: 1.35);
   static const TextStyle _hint16 =
-      TextStyle(color: _c999, fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: -0.8);
+      TextStyle(color: _c999, fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: -0.55);
   static const TextStyle _chip14 =
-      TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: _c999, letterSpacing: -0.8);
+      TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: _c999, letterSpacing: -0.55);
 
   @override
   void initState() {
@@ -292,7 +292,7 @@ class _AiChatPageState extends State<AiChatPage>
     );
   }
 
-  // ---- 채팅 영역(입력중 버블 포함), 동적 bottom padding ----
+  // ---- 채팅 영역(입력중 버블 포함) ----
   Widget _buildChatAreaWithTyping(double bottomRegionHeight) {
     final itemCount = _messages.length + (_isAiTyping ? 1 : 0);
     return ListView.builder(

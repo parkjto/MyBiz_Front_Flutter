@@ -10,6 +10,7 @@ import 'ai_chat_page.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:mybiz_app/widgets/main_bottom_nav.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 import 'scraping_page.dart';
 
@@ -62,7 +63,10 @@ class _MainPageState extends State<MainPage> {
           SvgPicture.asset('assets/images/MyBiz.svg', height: 22, fit: BoxFit.contain),
           const Spacer(),
           GestureDetector(
-            onTap: () => setState(() => _menuOpen = true),
+            onTap: () => setState(() {
+              _menuOpen = true;
+              _menuFocusIndex = -1; // 메뉴 열 때 포커스 초기화
+            }),
             child: Image.asset('assets/images/menu.png', width: 26, height: 14, fit: BoxFit.contain),
           ),
         ],
@@ -88,7 +92,7 @@ class _MainPageState extends State<MainPage> {
         ),
         items: bannerImages.map((path) {
           return ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
             child: Image.asset(path, fit: BoxFit.cover, width: double.infinity),
           );
         }).toList(),
@@ -137,7 +141,7 @@ class _MainPageState extends State<MainPage> {
       child: SizedBox(
         width: width,
         child: Container(
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFFCFCFD))),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(CommonStyles.cardRadius), border: Border.all(color: const Color(0xFFFCFCFD))),
           padding: const EdgeInsets.all(15),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,15 +291,23 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget _buildSideMenu() {
+    Widget _buildSideMenu() {
     final w = MediaQuery.of(context).size.width;
-    final panelW = w * 0.65;
-    final menuItems = <String>['광고 생성', '매출 분석', '리뷰 분석', '정부정책', '마이페이지'];
+    final panelW = w * 0.7;
+    
+    final menuItems = [
+      {'title': '광고 생성', 'icon': Icons.create_rounded},
+      {'title': '매출 분석', 'icon': Icons.trending_up_rounded},
+      {'title': '리뷰 분석', 'icon': Icons.rate_review_rounded},
+      {'title': '정부정책', 'icon': Icons.policy_rounded},
+      {'title': '마이페이지', 'icon': Icons.person_rounded},
+    ];
 
     return IgnorePointer(
       ignoring: !_menuOpen,
       child: Stack(
         children: [
+          // 배경 오버레이
           AnimatedOpacity(
             duration: const Duration(milliseconds: 200),
             opacity: _menuOpen ? 1 : 0,
@@ -304,6 +316,7 @@ class _MainPageState extends State<MainPage> {
               child: Container(color: Colors.black.withOpacity(0.25))
             ),
           ),
+          // 사이드 메뉴 패널
           AnimatedPositioned(
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeInOutCubic,
@@ -313,7 +326,7 @@ class _MainPageState extends State<MainPage> {
             child: Container(
               width: panelW,
               decoration: BoxDecoration(
-                color: Colors.white, 
+                color: Colors.white,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20), 
                   bottomLeft: Radius.circular(20)
@@ -328,17 +341,18 @@ class _MainPageState extends State<MainPage> {
               ),
               child: Column(
                 children: [
+                  // 헤더 섹션
                   Container(
-                    height: 70,
+                    height: 60,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: Colors.white, 
+                      color: Colors.white,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(20)
                       ),
                       border: Border(
                         bottom: BorderSide(
-                          color: const Color(0xFFF4F5FA), 
+                          color: const Color(0xFFF0F0F0), 
                           width: 1
                         )
                       )
@@ -348,7 +362,7 @@ class _MainPageState extends State<MainPage> {
                         const Text(
                           '전체 메뉴', 
                           style: TextStyle(
-                            fontSize: 20, 
+                            fontSize: 18, 
                             fontWeight: FontWeight.w700, 
                             color: Color(0xFF333333), 
                             letterSpacing: -0.8
@@ -357,63 +371,66 @@ class _MainPageState extends State<MainPage> {
                         const Spacer(),
                         GestureDetector(
                           onTap: () => setState(() => _menuOpen = false), 
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF4F5FA),
-                              borderRadius: BorderRadius.circular(8)
-                            ),
-                            child: const Icon(
-                              Icons.close_rounded, 
-                              size: 18, 
-                              color: Color(0xFF666666)
-                            ),
+                          child: const Icon(
+                            Icons.close_rounded, 
+                            size: 20, 
+                            color: Color(0xFF666666)
                           ),
                         ),
                       ],
                     ),
                   ),
+                  // 메뉴 아이템들
                   Expanded(
                     child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       itemCount: menuItems.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, __) => Container(
+                        height: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        color: const Color(0xFFF0F0F0),
+                      ),
                       itemBuilder: (context, i) {
                         final selected = i == _menuFocusIndex;
+                        final item = menuItems[i];
                         return GestureDetector(
                           onTap: () {
                             setState(() => _menuFocusIndex = i);
                             Future.delayed(const Duration(milliseconds: 90), () {
-                              if (menuItems[i] == '광고 생성') {
+                              if (item['title'] == '광고 생성') {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const AdCreationPage()));
-                              } else if (menuItems[i] == '매출 분석') {
+                              } else if (item['title'] == '매출 분석') {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const RevenueAnalysisPage()));
-                              } else if (menuItems[i] == '리뷰 분석') {
+                              } else if (item['title'] == '리뷰 분석') {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ScrapingPage()));
-                              } else if (menuItems[i] == '정부정책') {
+                              } else if (item['title'] == '정부정책') {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const GovernmentPolicyPage()));
-                              } else if (menuItems[i] == '마이페이지') {
+                              } else if (item['title'] == '마이페이지') {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => MyPage()));
                               }
                               setState(() => _menuOpen = false);
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                             decoration: BoxDecoration(
-                              color: selected ? const Color(0xFFF0F8FF) : Colors.transparent, 
-                              borderRadius: BorderRadius.circular(12),
-                              border: selected ? Border.all(
-                                color: const Color(0xFFE1F0FF), 
-                                width: 1
-                              ) : null
+                              gradient: selected ? LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  CommonStyles.primaryColor.withOpacity(0.04),
+                                  CommonStyles.primaryLightColor.withOpacity(0.02),
+                                ],
+                              ) : null,
+                              color: selected ? null : Colors.transparent, 
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               children: [
+                                // 메뉴 제목
                                 Expanded(
                                   child: Text(
-                                    menuItems[i],
+                                    item['title'] as String,
                                     style: TextStyle(
                                       fontSize: 16, 
                                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500, 
@@ -422,6 +439,7 @@ class _MainPageState extends State<MainPage> {
                                     ),
                                   ),
                                 ),
+                                // 화살표 아이콘
                                 if (selected)
                                   const Icon(
                                     Icons.arrow_forward_ios_rounded,

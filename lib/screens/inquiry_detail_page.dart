@@ -68,7 +68,7 @@ class _InquiryDetailPageState extends State<InquiryDetailPage> {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.55,
                     color: const Color(0xFF333333),
                   ),
                 ),
@@ -86,7 +86,7 @@ class _InquiryDetailPageState extends State<InquiryDetailPage> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.55,
                     color: widget.isCompleted 
                       ? const Color(0xFF2D6EFF) 
                       : const Color(0xFFFF6B35),

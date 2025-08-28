@@ -108,7 +108,7 @@ class _InquiryPageState extends State<InquiryPage> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
       ),
       child: Row(
         children: [
@@ -120,7 +120,7 @@ class _InquiryPageState extends State<InquiryPage> {
                 decoration: BoxDecoration(
                   color: _isInquiryHistory ? null : Colors.white,
                   gradient: _isInquiryHistory ? CommonStyles.brandGradient : null,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
                 child: Center(
                   child: Text(
@@ -145,7 +145,7 @@ class _InquiryPageState extends State<InquiryPage> {
                 decoration: BoxDecoration(
                   color: !_isInquiryHistory ? null : Colors.white,
                   gradient: !_isInquiryHistory ? CommonStyles.brandGradient : null,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
                 child: Center(
                   child: Text(
@@ -337,15 +337,15 @@ class _InquiryPageState extends State<InquiryPage> {
                 letterSpacing: -0.8,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                 borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                 borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                 borderSide: const BorderSide(color: Color(0xFF00C2FD)),
               ),
               filled: true,
@@ -366,15 +366,15 @@ class _InquiryPageState extends State<InquiryPage> {
                 letterSpacing: -0.8,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                 borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                 borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
                 borderSide: const BorderSide(color: Color(0xFF00C2FD)),
               ),
               filled: true,
@@ -389,7 +389,7 @@ class _InquiryPageState extends State<InquiryPage> {
             child: Container(
               decoration: BoxDecoration(
                 gradient: CommonStyles.brandGradient,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
               ),
               child: ElevatedButton(
                 onPressed: () {
@@ -402,7 +402,7 @@ class _InquiryPageState extends State<InquiryPage> {
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                   ),
                   elevation: 0,
                 ),

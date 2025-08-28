@@ -160,7 +160,7 @@ class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
                       fontSize: 14,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected ? Colors.white : const Color(0xFF666666),
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                     ),
                   ),
                 ),
@@ -197,7 +197,7 @@ class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
         },
         style: const TextStyle(
           fontSize: 16,
-          letterSpacing: -0.8,
+          letterSpacing: -0.55,
           color: Color(0xFF333333),
         ),
         decoration: const InputDecoration(

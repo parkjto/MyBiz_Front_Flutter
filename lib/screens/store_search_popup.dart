@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class StoreSearchPopup extends StatefulWidget {
   final Function(String, String, String, String) onStoreSelected;
@@ -137,24 +138,30 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
     final double w = MediaQuery.of(context).size.width * 0.95;
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+              child: ClipRRect(
+          borderRadius: BorderRadius.circular(CommonStyles.dialogRadius),
         child: Container(
           width: w,
           height: 500,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+                      decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(CommonStyles.dialogRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1), 
+                blurRadius: 10, 
+                offset: const Offset(0, 4)
+              )
+            ],
           ),
           child: Column(
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(CommonStyles.dialogRadius), topRight: Radius.circular(CommonStyles.dialogRadius)),
                 ),
                 child: Column(
                   children: [
@@ -165,7 +172,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: -0.8,
+                            letterSpacing: -0.55,
                             color: const Color(0xFF333333),
                           ),
                         ),
@@ -180,9 +187,16 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                     Container(
                       height: 48,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
+                        border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3)
+                          )
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -191,11 +205,11 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                             child: TextField(
                               controller: _searchController,
                               decoration: InputDecoration(
-                                hintText: '검색 예시) 성화해장국 인하점',
+                                hintText: '상호명 검색',
                                 hintStyle: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
-                                  letterSpacing: -0.8,
+                                  letterSpacing: -0.55,
                                   color: const Color(0xFF999999),
                                 ),
                                 border: InputBorder.none,
@@ -204,13 +218,13 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
-                                letterSpacing: -0.8,
+                                letterSpacing: -0.55,
                                 color: const Color(0xFF333333),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Icon(Icons.search, size: 20, color: Color(0xFF666666)),
+                          const Icon(Icons.search_rounded, size: 20, color: Color(0xFF999999)),
                           const SizedBox(width: 16),
                         ],
                       ),
@@ -218,7 +232,6 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                   ],
                 ),
               ),
-              Container(height: 1, color: const Color(0xFFE0E0E0)),
               Expanded(
                 child: Container(
                   color: Colors.white,
@@ -233,22 +246,22 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
   }
 
   Widget _buildInitialContent() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
+          return Center(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.search, size: 48, color: Color(0xFFCCCCCC)),
             const SizedBox(height: 16),
             Text(
-              '상호명을 입력하신 후,\n본인의 가게를 선택하시면\n가게 정보가 입력됩니다.',
+              '상호명을 검색하여 가게를 선택하세요',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                letterSpacing: -0.8,
+                letterSpacing: -0.55,
                 color: const Color(0xFF666666),
-                height: 1.5,
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
@@ -262,14 +275,14 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
     final bool hasInfo = _searchResults.length >= 10;
     return Column(
       children: [
-        if (hasInfo)
+                if (hasInfo)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            margin: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
               border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
             ),
             child: Text(
@@ -277,7 +290,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                letterSpacing: -0.8,
+                letterSpacing: -0.55,
                 color: const Color(0xFF666666),
                 height: 1.4,
               ),
@@ -285,7 +298,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
           ),
         Expanded(
           child: ListView.builder(
-            padding: EdgeInsets.fromLTRB(16, hasInfo ? 0 : 12, 16, 16),
+            padding: EdgeInsets.fromLTRB(20, hasInfo ? 0 : 12, 20, 16),
             itemCount: _searchResults.length,
             itemBuilder: (context, index) {
               final store = _searchResults[index];
@@ -300,16 +313,16 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
   Widget _buildStoreItem(Map<String, String> store) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+              decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
         border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
       ),
-      child: InkWell(
-        onTap: () => _selectStore(store),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+              child: InkWell(
+          onTap: () => _selectStore(store),
+          borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
+                              child: Padding(
+              padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -318,7 +331,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.55,
                   color: const Color(0xFF333333),
                 ),
               ),
@@ -337,7 +350,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
-                            letterSpacing: -0.8,
+                            letterSpacing: -0.55,
                             color: const Color(0xFF666666),
                           ),
                         ),
@@ -347,7 +360,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
-                            letterSpacing: -0.8,
+                            letterSpacing: -0.55,
                             color: const Color(0xFF666666),
                           ),
                         ),
@@ -366,7 +379,7 @@ class _StoreSearchPopupState extends State<StoreSearchPopup> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: const Color(0xFF666666),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 
 class CommonStyles {
   // Colors
@@ -9,34 +10,42 @@ class CommonStyles {
   
   // Brand Gradient
   static const LinearGradient brandGradient = LinearGradient(
-    colors: [Color(0xFF00AEFF), Color(0xFF0084FF)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
+    colors: [Color(0xFF2D6EFF), Color(0xFF6AA8FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
   
   // Spacing
   static const double sectionGap = 12.0;
   static const EdgeInsets sectionPadding = EdgeInsets.all(20.0);
   
+  // Border Radius Standards
+  static const double inputRadius = 12.0;        // Input fields, buttons
+  static const double cardRadius = 12.0;         // Cards, containers
+  static const double dialogRadius = 16.0;       // Dialogs, modals
+  static const double buttonRadius = 8.0;       // Action buttons
+  static const double chipRadius = 8.0;          // Chips, tags
+  static const double avatarRadius = 24.0;       // Profile images, large icons
+  
   // Text Styles
   static final TextStyle titleStyle = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    letterSpacing: -0.8,
+    letterSpacing: -0.55,
     color: const Color(0xFF333333),
   );
   
   static final TextStyle labelStyle = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    letterSpacing: -0.8,
+    letterSpacing: -0.55,
     color: const Color(0xFF9AA0A6),
   );
   
   static final TextStyle contentStyle = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    letterSpacing: -0.8,
+    letterSpacing: -0.55,
     color: const Color(0xFF333333),
   );
   
@@ -44,7 +53,7 @@ class CommonStyles {
   static BoxDecoration sectionBox() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(cardRadius),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withOpacity(0.05),

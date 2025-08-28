@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mybiz_app/screens/main_page.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class MainHeader extends StatelessWidget {
   final String title;
@@ -24,7 +25,7 @@ class MainHeader extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
+                letterSpacing: -0.55,
                 color: Color(0xFF333333),
               ),
             ),

@@ -25,7 +25,7 @@ class LoginPage extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 48,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
+                          letterSpacing: -0.55,
                           color: Colors.white,
                         ),
                       ),
@@ -37,7 +37,7 @@ class LoginPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 16,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.55,
                       color: const Color(0xFF9AA0A6),
                     ),
                   ),
@@ -52,8 +52,8 @@ class LoginPage extends StatelessWidget {
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
+                    topLeft: Radius.circular(CommonStyles.dialogRadius),
+                    topRight: Radius.circular(CommonStyles.dialogRadius),
                   ),
                 ),
                 child: Column(
@@ -72,7 +72,7 @@ class LoginPage extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 16,
-                        letterSpacing: -0.8,
+                        letterSpacing: -0.55,
                         color: const Color(0xFF9AA0A6),
                       ),
                     ),
@@ -116,13 +116,13 @@ class LoginPage extends StatelessWidget {
       height: 56,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

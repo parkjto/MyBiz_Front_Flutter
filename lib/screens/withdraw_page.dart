@@ -8,6 +8,7 @@ import 'package:mybiz_app/screens/revenue_analysis_page.dart';
 import 'package:mybiz_app/screens/ai_chat_page.dart';
 import 'package:mybiz_app/widgets/main_bottom_nav.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/common_styles.dart';
 
 class WithdrawPage extends StatefulWidget {
   const WithdrawPage({super.key});
@@ -87,7 +88,7 @@ class _WithdrawPageState extends State<WithdrawPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: const Color(0xFF505050)),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -146,7 +147,7 @@ class _WithdrawPageState extends State<WithdrawPage> {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                   ),
                   child: Center(
                     child: Text(
@@ -175,7 +176,7 @@ class _WithdrawPageState extends State<WithdrawPage> {
                       color: const Color(0xFFE5E5E5),
                       width: 1,
                     ),
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
                   ),
                   child: Center(
                     child: Text(
