@@ -417,8 +417,8 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
 
 
     Widget _buildStatus() {
-        final statusText = '연동됨'; // 현재 상태를 연동된 것으로 고정
-        final statusColor = CommonStyles.primaryLightColor; // 연동된 상태 색상
+        const statusText = '연동됨'; // 현재 상태를 연동된 것으로 고정
+        const statusColor = CommonStyles.primaryLightColor; // 연동된 상태 색상
         final time = _lastScrapeAt == null ? '' : '마지막 스크래핑: $_lastScrapeAt';
         
         return Container(
@@ -435,7 +435,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                     Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                            Text('현재 상태', style: _titleStyle),
+                            const Text('현재 상태', style: _titleStyle),
                             Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
@@ -491,7 +491,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        Text(
+                        const Text(
                             '연동 정보',
                             style: _titleStyle,
                         ),
@@ -516,7 +516,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
-                                    borderSide: BorderSide(color: CommonStyles.primaryLightColor, width: 2),
+                                    borderSide: const BorderSide(color: CommonStyles.primaryLightColor, width: 2),
                                 ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8F9FA),
@@ -546,7 +546,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(CommonStyles.inputRadius),
-                                    borderSide: BorderSide(color: CommonStyles.primaryLightColor, width: 2),
+                                    borderSide: const BorderSide(color: CommonStyles.primaryLightColor, width: 2),
                                 ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8F9FA),
@@ -580,7 +580,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                             visualDensity: const VisualDensity(horizontal: -2, vertical: -4),
                             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             activeColor: CommonStyles.primaryLightColor,
-                            side: BorderSide(color: CommonStyles.primaryLightColor, width: 0),
+                            side: const BorderSide(color: CommonStyles.primaryLightColor, width: 0),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -665,7 +665,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Text(
+                    const Text(
                         '연동 관리',
                         style: _titleStyle,
                     ),
@@ -688,9 +688,9 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                     ),
                                     elevation: 0,
                                 ),
-                                child: Text(
+                                child: const Text(
                                     '로그인/연동',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,

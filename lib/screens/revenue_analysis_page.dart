@@ -160,7 +160,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
                   gradient: _brandGrad,
                   borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
-                child: Center(
+                child: const Center(
                   child: Text(
                     '매출 분석',
                     style: TextStyle(
@@ -193,14 +193,14 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
-                child: Center(
+                child: const Center(
                   child: Text(
                     '리뷰분석',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.55,
-                      color: const Color(0xFF999999),
+                      color: Color(0xFF999999),
                     ),
                   ),
                 ),
@@ -233,12 +233,12 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${_selectedYear}년 ${_selectedMonth}월 매출',
-            style: TextStyle(
+            '$_selectedYear년 $_selectedMonth월 매출',
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w400,
               letterSpacing: -0.8,
-              color: const Color(0xFF666666),
+              color: Color(0xFF666666),
             ),
           ),
           const SizedBox(height: 2),
@@ -254,32 +254,32 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
                           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
                           (Match m) => '${m[1]},'
                         )}원',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.8,
-                          color: const Color(0xFF333333),
+                          color: Color(0xFF333333),
                         ),
                       );
                     },
                   )
-                : Text(
+                : const Text(
                     '3,250,000원',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.8,
-                      color: const Color(0xFF333333),
+                      color: Color(0xFF333333),
                     ),
                   ),
               const Spacer(),
-              Text(
+              const Text(
                 '지난달 대비 +28%',
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
                   letterSpacing: -0.8,
-                  color: const Color(0xFF9AA0A6),
+                  color: Color(0xFF9AA0A6),
                 ),
               ),
             ],
@@ -341,18 +341,18 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
     );
   }
 
-  TextStyle get _weekLabel => TextStyle(
+  TextStyle get _weekLabel => const TextStyle(
     fontSize: 12.5,
     fontWeight: FontWeight.w500,
     letterSpacing: -0.8,
-    color: const Color(0xFFB8BDC3),
+    color: Color(0xFFB8BDC3),
   );
 
   Widget _buildYearPill() {
     return _PillPicker(
-      label: '${_selectedYear}년',
+      label: '$_selectedYear년',
       onTap: () async {
-        final picked = await _showBottomPicker(context, _years.map((e)=>'$e년').toList(), '${_selectedYear}년');
+        final picked = await _showBottomPicker(context, _years.map((e)=>'$e년').toList(), '$_selectedYear년');
         if (picked != null) setState(() => _selectedYear = picked.replaceAll('년', ''));
       },
     );
@@ -360,9 +360,9 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
 
   Widget _buildMonthPill() {
     return _PillPicker(
-      label: '${_selectedMonth}월',
+      label: '$_selectedMonth월',
       onTap: () async {
-        final picked = await _showBottomPicker(context, _months.map((e)=>'$e월').toList(), '${_selectedMonth}월');
+        final picked = await _showBottomPicker(context, _months.map((e)=>'$e월').toList(), '$_selectedMonth월');
         if (picked != null) setState(() => _selectedMonth = picked.replaceAll('월', ''));
       },
     );
@@ -430,11 +430,11 @@ class _PillPicker extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.8,
-                color: const Color(0xFF6E7480),
+                color: Color(0xFF6E7480),
               ),
             ),
             const Icon(Icons.expand_more, size: 18, color: Color(0xFF9AA0A6)),
@@ -495,7 +495,7 @@ class _RevenuePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final padding = const EdgeInsets.fromLTRB(8, 8, 8, 24);
+    const padding = EdgeInsets.fromLTRB(8, 8, 8, 24);
     final chart = Rect.fromLTWH(
       padding.left,
       padding.top,

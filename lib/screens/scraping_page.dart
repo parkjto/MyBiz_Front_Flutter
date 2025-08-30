@@ -14,7 +14,7 @@ class ScrapingPage extends StatefulWidget {
 
 class _ScrapingPageState extends State<ScrapingPage> {
   // 상태 관리
-  bool _isAnalyzing = false;
+  final bool _isAnalyzing = false;
   bool _hasError = false;
   String _errorMessage = '';
   bool _showAnalysisResults = true; // 분석 결과 표시 여부
@@ -103,14 +103,14 @@ class _ScrapingPageState extends State<ScrapingPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
-                child: Center(
+                child: const Center(
                   child: Text(
                     '매출 분석',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.55,
-                      color: const Color(0xFF999999),
+                      color: Color(0xFF999999),
                     ),
                   ),
                 ),
@@ -127,7 +127,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                   gradient: CommonStyles.brandGradient,
                   borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
                 ),
-                child: Center(
+                child: const Center(
                   child: Text(
                     '리뷰분석',
                     style: TextStyle(
@@ -150,13 +150,13 @@ class _ScrapingPageState extends State<ScrapingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           '고객 만족도 분석',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
-            color: const Color(0xFF333333),
+            color: Color(0xFF333333),
           ),
         ),
         const SizedBox(height: 15),
@@ -171,7 +171,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(CommonStyles.chipRadius),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 15,
                   child: Row(
@@ -216,13 +216,13 @@ class _ScrapingPageState extends State<ScrapingPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                                              Text(
+                                              const Text(
                           '긍정 (75%)',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             letterSpacing: -0.8,
-                            color: const Color(0xFF333333),
+                            color: Color(0xFF333333),
                           ),
                         ),
                     ],
@@ -238,13 +238,13 @@ class _ScrapingPageState extends State<ScrapingPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                                              Text(
+                                              const Text(
                           '보통 (15%)',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             letterSpacing: -0.8,
-                            color: const Color(0xFF333333),
+                            color: Color(0xFF333333),
                           ),
                         ),
                     ],
@@ -260,13 +260,13 @@ class _ScrapingPageState extends State<ScrapingPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                                              Text(
+                                              const Text(
                           '부정 (10%)',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             letterSpacing: -0.8,
-                            color: const Color(0xFF333333),
+                            color: Color(0xFF333333),
                           ),
                         ),
                     ],
@@ -284,9 +284,9 @@ class _ScrapingPageState extends State<ScrapingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           '최근 등록된 리뷰',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.8,
@@ -380,9 +380,9 @@ class _ScrapingPageState extends State<ScrapingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           '이런 점이 좋아요!',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.8,
@@ -415,9 +415,9 @@ class _ScrapingPageState extends State<ScrapingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           '이런 점이 아쉬워요!',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.8,
@@ -716,12 +716,12 @@ class _ScrapingPageState extends State<ScrapingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           '분석 결과 활용',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF333333),
+            color: Color(0xFF333333),
             letterSpacing: -0.8,
           ),
         ),

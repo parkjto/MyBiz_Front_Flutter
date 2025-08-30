@@ -15,13 +15,16 @@ import 'package:mybiz_app/widgets/common_styles.dart';
 import 'scraping_page.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final VoidCallback? onLogout;
+  
+  const MainPage({super.key, this.onLogout});
+
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   bool _menuOpen = false;
   int _menuFocusIndex = -1;
 
@@ -29,6 +32,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return MainPageLayout(
       selectedIndex: _selectedIndex,
+      onLogout: widget.onLogout,
       child: Stack(
         children: [
           Column(
@@ -36,6 +40,7 @@ class _MainPageState extends State<MainPage> {
               _buildLogoSection(),
               Expanded(
                 child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 20),
                   child: Column(
                     children: [
                       _buildBannerSection(),
@@ -170,7 +175,7 @@ class _MainPageState extends State<MainPage> {
             height: 37,
             child: Row(
               children: [
-                Text('매출분석', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: const Color(0xFF6B6A6F), letterSpacing: -0.8)),
+                const Text('매출분석', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF6B6A6F), letterSpacing: -0.8)),
                 const Spacer(),
                 GestureDetector(
                   onTap: () {
@@ -178,7 +183,7 @@ class _MainPageState extends State<MainPage> {
                   },
                   child: Row(
                     children: [
-                      Text('더보기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w300, color: const Color(0xFF999999), letterSpacing: -0.8)),
+                      const Text('더보기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w300, color: Color(0xFF999999), letterSpacing: -0.8)),
                       const SizedBox(width: 6),
                       Transform.rotate(angle: 3.14159, child: Opacity(opacity: 0.5, child: Image.asset('assets/images/arrow.png', width: 8, height: 8, fit: BoxFit.contain))),
                     ],
@@ -210,12 +215,12 @@ class _MainPageState extends State<MainPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('52,003,000원', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.8)),
+                const Text('52,003,000원', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.8)),
                 Row(
                   children: [
                     Image.asset('assets/images/mainRevenueUP.png', width: 26, height: 14, fit: BoxFit.contain),
                     const SizedBox(width: 10),
-                    Text('+40.2%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFFB1FFCE), letterSpacing: -0.8)),
+                    const Text('+40.2%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFB1FFCE), letterSpacing: -0.8)),
                   ],
                 ),
               ],
@@ -345,14 +350,14 @@ class _MainPageState extends State<MainPage> {
                   Container(
                     height: 60,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: const BorderRadius.only(
+                      borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(20)
                       ),
                       border: Border(
                         bottom: BorderSide(
-                          color: const Color(0xFFF0F0F0), 
+                          color: Color(0xFFF0F0F0), 
                           width: 1
                         )
                       )
@@ -406,7 +411,7 @@ class _MainPageState extends State<MainPage> {
                               } else if (item['title'] == '정부정책') {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const GovernmentPolicyPage()));
                               } else if (item['title'] == '마이페이지') {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => MyPage()));
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => MyPage(onLogout: widget.onLogout)));
                               }
                               setState(() => _menuOpen = false);
                             });

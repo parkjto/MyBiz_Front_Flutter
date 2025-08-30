@@ -7,7 +7,7 @@ import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/main_bottom_nav.dart';
 
 class AiChatPage extends StatefulWidget {
-  const AiChatPage({Key? key}) : super(key: key);
+  const AiChatPage({super.key});
 
   @override
   State<AiChatPage> createState() => _AiChatPageState();
@@ -216,7 +216,7 @@ class _AiChatPageState extends State<AiChatPage>
                                 color: Colors.black.withOpacity(0.7),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   SizedBox(
@@ -227,7 +227,7 @@ class _AiChatPageState extends State<AiChatPage>
                                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Text(
                                     'AI가 응답을 작성중입니다...',
                                     style: TextStyle(

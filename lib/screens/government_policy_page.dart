@@ -279,7 +279,7 @@ class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
             url: policy['url'] as String,
             category: policy['category'] as String,
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -357,17 +357,17 @@ class _GovernmentPolicyPageState extends State<GovernmentPolicyPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
+              const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.open_in_new,
                     size: 16,
                     color: Color(0xFF00AEFF),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     '자세히 보기',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF00AEFF),

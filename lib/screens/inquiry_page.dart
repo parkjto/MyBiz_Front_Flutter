@@ -191,7 +191,7 @@ class _InquiryPageState extends State<InquiryPage> {
               inquiry['date'],
               showDivider: !isLast,
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -226,10 +226,10 @@ class _InquiryPageState extends State<InquiryPage> {
               flex: 2,
               child: Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: const Color(0xFF333333),
+                  color: Color(0xFF333333),
                   letterSpacing: -0.8,
                 ),
               ),
@@ -280,7 +280,7 @@ class _InquiryPageState extends State<InquiryPage> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _selectedInquiryType,
+            initialValue: _selectedInquiryType,
             decoration: InputDecoration(
               labelText: '문의 종류',
               labelStyle: const TextStyle(
@@ -406,7 +406,7 @@ class _InquiryPageState extends State<InquiryPage> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
+                child: const Text(
                   '문의 제출',
                   style: TextStyle(
                     fontSize: 16,

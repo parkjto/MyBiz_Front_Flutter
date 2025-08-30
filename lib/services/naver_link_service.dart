@@ -6,8 +6,8 @@ class NaverLinkService {
 
   final Dio _dio = Dio(
     BaseOptions(
-      connectTimeout: Duration(seconds: 20),
-      receiveTimeout: Duration(seconds: 20),
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
       validateStatus: (code) => code != null && code >= 200 && code < 300,
     ),
   );
