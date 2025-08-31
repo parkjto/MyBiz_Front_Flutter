@@ -55,6 +55,26 @@ class NaverApiService {
     ));
   }
 
+  // 검색/조회 응답을 공통 포맷으로 정규화
+  Map<String, dynamic> _normalizeStoreItem(dynamic item) {
+    final rawName = item['store_name'] ?? item['name'] ?? item['title'] ?? item['place_name'] ?? '';
+    final rawAddress = item['address'] ?? item['jibunAddress'] ?? '';
+    final rawRoadAddress = item['road_address'] ?? item['roadAddress'] ?? item['roadAddressName'] ?? '';
+    final rawCategory = item['category'] ?? item['categoryName'] ?? item['businessType'] ?? '';
+
+    return {
+      'name': HtmlUtils.removeHtmlTags(rawName),
+      'address': HtmlUtils.removeHtmlTags(rawAddress),
+      'roadAddress': HtmlUtils.removeHtmlTags(rawRoadAddress),
+      'businessType': HtmlUtils.removeHtmlTags(rawCategory),
+      'coordinates_x': item['coordinates_x'] ?? item['x'] ?? '',
+      'coordinates_y': item['coordinates_y'] ?? item['y'] ?? '',
+      'place_id': item['place_id'] ?? item['id'] ?? item['placeId'] ?? '',
+      'phone': item['phone'] ?? item['tel'] ?? '',
+      'map_url': item['map_url'] ?? item['link'] ?? item['url'] ?? '',
+    };
+  }
+
   // 액세스 토큰 갱신
   Future<String?> _refreshAccessToken(String refreshToken) async {
     try {
@@ -108,19 +128,7 @@ class NaverApiService {
         final List<dynamic> results = response.data['data'] ?? [];
         print('✅ 검색 결과 ${results.length}개 발견');
         
-        return results.map<Map<String, dynamic>>((item) {
-          return {
-            'name': HtmlUtils.removeHtmlTags(item['store_name'] ?? item['name'] ?? ''),
-            'address': HtmlUtils.removeHtmlTags(item['address'] ?? ''),
-            'roadAddress': HtmlUtils.removeHtmlTags(item['road_address'] ?? item['roadAddress'] ?? ''),
-            'businessType': HtmlUtils.removeHtmlTags(item['category'] ?? item['businessType'] ?? ''),
-            'coordinates_x': item['coordinates_x'] ?? '',
-            'coordinates_y': item['coordinates_y'] ?? '',
-            'place_id': item['place_id'] ?? '',
-            'phone': item['phone'] ?? '',
-            'map_url': item['map_url'] ?? '',
-          };
-        }).toList();
+        return results.map<Map<String, dynamic>>((item) => _normalizeStoreItem(item)).toList();
       } else {
         print('⚠️ 검색 결과 없음 또는 API 오류');
         return [];
@@ -147,19 +155,7 @@ class NaverApiService {
         final List<dynamic> results = response.data['data'] ?? [];
         print('✅ 회원가입용 검색 결과 ${results.length}개 발견');
         
-        return results.map<Map<String, dynamic>>((item) {
-          return {
-            'name': HtmlUtils.removeHtmlTags(item['store_name'] ?? item['name'] ?? ''),
-            'address': HtmlUtils.removeHtmlTags(item['address'] ?? ''),
-            'roadAddress': HtmlUtils.removeHtmlTags(item['road_address'] ?? item['roadAddress'] ?? ''),
-            'businessType': HtmlUtils.removeHtmlTags(item['category'] ?? item['businessType'] ?? ''),
-            'coordinates_x': item['coordinates_x'] ?? '',
-            'coordinates_y': item['coordinates_y'] ?? '',
-            'place_id': item['place_id'] ?? '',
-            'phone': item['phone'] ?? '',
-            'map_url': item['map_url'] ?? '',
-          };
-        }).toList();
+        return results.map<Map<String, dynamic>>((item) => _normalizeStoreItem(item)).toList();
       } else {
         print('⚠️ 회원가입용 검색 결과 없음');
         return [];
@@ -183,17 +179,7 @@ class NaverApiService {
         final data = response.data['data'];
         print('✅ Place ID 조회 성공');
         
-        return {
-          'name': HtmlUtils.removeHtmlTags(data['store_name'] ?? data['name'] ?? ''),
-          'address': HtmlUtils.removeHtmlTags(data['address'] ?? ''),
-          'roadAddress': HtmlUtils.removeHtmlTags(data['road_address'] ?? data['roadAddress'] ?? ''),
-          'businessType': HtmlUtils.removeHtmlTags(data['category'] ?? data['businessType'] ?? ''),
-          'coordinates_x': data['coordinates_x'] ?? '',
-          'coordinates_y': data['coordinates_y'] ?? '',
-          'place_id': data['place_id'] ?? '',
-          'phone': data['phone'] ?? '',
-          'map_url': data['map_url'] ?? '',
-        };
+        return _normalizeStoreItem(data);
       } else {
         print('⚠️ Place ID 조회 실패');
         return null;
@@ -224,19 +210,7 @@ class NaverApiService {
         final List<dynamic> results = response.data['data'] ?? [];
         print('✅ 좌표 기반 검색 결과 ${results.length}개 발견');
         
-        return results.map<Map<String, dynamic>>((item) {
-          return {
-            'name': HtmlUtils.removeHtmlTags(item['store_name'] ?? item['name'] ?? ''),
-            'address': HtmlUtils.removeHtmlTags(item['address'] ?? ''),
-            'roadAddress': HtmlUtils.removeHtmlTags(item['road_address'] ?? item['roadAddress'] ?? ''),
-            'businessType': HtmlUtils.removeHtmlTags(item['category'] ?? item['businessType'] ?? ''),
-            'coordinates_x': item['coordinates_x'] ?? '',
-            'coordinates_y': item['coordinates_y'] ?? '',
-            'place_id': item['place_id'] ?? '',
-            'phone': item['phone'] ?? '',
-            'map_url': item['map_url'] ?? '',
-          };
-        }).toList();
+        return results.map<Map<String, dynamic>>((item) => _normalizeStoreItem(item)).toList();
       } else {
         print('⚠️ 좌표 기반 검색 결과 없음');
         return [];

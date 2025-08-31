@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 import '../services/social_auth_service.dart';
 import '../services/auth_storage_service.dart';
+import '../services/user_service.dart';
+import '../services/user_data_service.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback? onLoginSuccess;
@@ -180,13 +182,13 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // 1. 카카오 인증 URL 가져오기
+      // 1. 카카오 인증 URL 가져오기 (강제 재인증 파라미터 포함)
       final authUrl = await _authService.getKakaoAuthUrl();
       if (authUrl == null) {
         throw Exception('카카오 인증 URL을 가져올 수 없습니다.');
       }
 
-      // 2. WebView로 OAuth 인증 진행
+      // 2. WebView로 OAuth 인증 진행 (캐시 없이)
       if (mounted) {
         showDialog(
           context: context,
@@ -231,13 +233,13 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // 1. 네이버 인증 URL 가져오기
+      // 1. 네이버 인증 URL 가져오기 (강제 재인증 파라미터 포함)
       final authUrl = await _authService.getNaverAuthUrl();
       if (authUrl == null) {
         throw Exception('네이버 인증 URL을 가져올 수 없습니다.');
       }
 
-      // 2. WebView로 OAuth 인증 진행
+      // 2. WebView로 OAuth 인증 진행 (캐시 없이)
       if (mounted) {
         showDialog(
           context: context,
@@ -286,7 +288,8 @@ class _LoginPageState extends State<LoginPage> {
           normalized['refresh_token'],
           normalized['expires_at'],
           normalized['user'],
-          '카카오',
+          result['user']?['provider'] ?? '카카오',
+          isRegistered: result['isRegistered'] == true || result['isNewUser'] == false,
         );
       }
     } catch (e) {
@@ -314,7 +317,8 @@ class _LoginPageState extends State<LoginPage> {
           normalized['refresh_token'],
           normalized['expires_at'],
           normalized['user'],
-          '네이버',
+          result['user']?['provider'] ?? '네이버',
+          isRegistered: result['isRegistered'] == true || result['isNewUser'] == false,
         );
       }
     } catch (e) {
@@ -330,7 +334,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // 로그인 성공 처리
-  Future<void> _handleLoginSuccess(String accessToken, String? refreshToken, String? expiresAt, Map<String, dynamic>? user, String loginProvider) async {
+  Future<void> _handleLoginSuccess(String accessToken, String? refreshToken, String? expiresAt, Map<String, dynamic>? user, String loginProvider, {bool isRegistered = false}) async {
     try {
       print('🎉 로그인 성공 처리 시작: $loginProvider');
       print('📊 받은 데이터: $user');
@@ -346,36 +350,29 @@ class _LoginPageState extends State<LoginPage> {
       );
       print('✅ 토큰 저장 완료');
 
-      // 사용자 정보 저장
-      if (user != null) {
-        print('👤 사용자 정보 저장 중...');
-        await _storageService.saveUserInfo(user);
-        print('✅ 사용자 정보 저장 완료');
-      }
-
-      // 로그인 제공자 저장
+      // 로그인 제공자 저장 (소셜 로그아웃용)
       print('🏷️ 로그인 제공자 저장 중...');
       await _storageService.saveLoginProvider(loginProvider);
       print('✅ 로그인 제공자 저장 완료');
 
+      // 사용자/스토어 정보 동기화
+      await _syncProfileAndStore();
+
       // 성공 메시지 표시
       if (mounted) {
         print('📱 성공 메시지 표시 중...');
+        // 분기: 기존 회원이면 메인으로, 신규면 추가정보 입력으로
+        final targetRoute = isRegistered ? '/main' : '/signup';
+        final message = isRegistered ? '$loginProvider 로그인 성공!' : '$loginProvider 로그인 성공! 추가 정보를 입력해주세요.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$loginProvider 로그인 성공! 추가 정보를 입력해주세요.'),
+            content: Text(message),
             backgroundColor: const Color(0xFF4CAF50),
           ),
         );
-
-        // 회원가입 페이지로 이동 (추가 정보 입력)
-        print('🔄 회원가입 페이지로 이동 준비 중...');
-        Future.delayed(const Duration(milliseconds: 1000), () {
+        Future.delayed(const Duration(milliseconds: 600), () {
           if (mounted) {
-            print('🚀 회원가입 페이지로 이동: /signup');
-            Navigator.pushReplacementNamed(context, '/signup');
-          } else {
-            print('❌ 위젯이 마운트되지 않음');
+            Navigator.pushReplacementNamed(context, targetRoute);
           }
         });
       }
@@ -389,6 +386,33 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _syncProfileAndStore() async {
+    try {
+      // 서버에서 me, stores 조회 후 로컬 UserDataService에 반영
+      final userService = UserService();
+      final me = await userService.getMe();
+      final stores = await userService.listStores();
+
+      // 1) 사용자 로컬 저장
+      await UserDataService.saveUserData(
+        name: me['nickname'] ?? '',
+        phone: me['phone_number'] ?? '',
+        email: me['email'] ?? '',
+        businessType: me['business_type'] ?? '',
+        address: (stores.isNotEmpty ? (stores.first['address'] ?? '') : ''),
+        businessName: (stores.isNotEmpty ? (stores.first['store_name'] ?? '') : ''),
+        businessPhone: (stores.isNotEmpty ? (stores.first['phone'] ?? '') : ''),
+      );
+
+      // 2) primary store id 저장 (첫번째를 기본으로 간주)
+      if (stores.isNotEmpty && stores.first['id'] != null) {
+        await UserDataService.saveUserStoreId(stores.first['id']);
+      }
+    } catch (e) {
+      // 동기화 실패는 로그인 자체를 막지 않음
     }
   }
 

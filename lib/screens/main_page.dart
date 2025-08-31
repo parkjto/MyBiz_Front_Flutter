@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'ad_creation_page.dart';
 import 'revenue_analysis_page.dart';
-import 'review_analysis_page.dart';
+// import 'review_analysis_page.dart';
 import 'government_policy_page.dart';
 import 'mypage.dart';
-import 'ai_chat_page.dart';
+// import 'ai_chat_page.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+// import 'package:mybiz_app/widgets/main_bottom_nav.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 
 import 'scraping_page.dart';
+import '../services/sales_service.dart';
 
 class MainPage extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -27,6 +28,34 @@ class _MainPageState extends State<MainPage> {
   final int _selectedIndex = 0;
   bool _menuOpen = false;
   int _menuFocusIndex = -1;
+  
+  // 매출 카드 데이터
+  final SalesService _sales = SalesService();
+  int? _homeMonthTotal;
+  double? _homeMomPct;
+  int? _homeTodayTotal;
+  int? _homeWeekTotal;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHomeSales();
+  }
+
+  Future<void> _loadHomeSales() async {
+    try {
+      final now = DateTime.now();
+      final summary = await _sales.getMonthSummary(year: now.year, month: now.month);
+      final today = await _sales.getTodayTotal();
+      final week = await _sales.getWeekTotal();
+      setState(() {
+        _homeMonthTotal = (summary['monthTotal'] ?? 0) as int;
+        _homeMomPct = (summary['momChangePct'] as num?)?.toDouble();
+        _homeTodayTotal = today;
+        _homeWeekTotal = week;
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,12 +244,15 @@ class _MainPageState extends State<MainPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('52,003,000원', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.8)),
+                Text(_formatCurrency(_homeMonthTotal), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.8)),
                 Row(
                   children: [
                     Image.asset('assets/images/mainRevenueUP.png', width: 26, height: 14, fit: BoxFit.contain),
                     const SizedBox(width: 10),
-                    const Text('+40.2%', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFB1FFCE), letterSpacing: -0.8)),
+                    Text(
+                      _homeMomPct == null ? '-' : '${_homeMomPct! >= 0 ? '+' : ''}${_homeMomPct!.toStringAsFixed(1)}%',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFB1FFCE), letterSpacing: -0.8),
+                    ),
                   ],
                 ),
               ],
@@ -259,9 +291,9 @@ class _MainPageState extends State<MainPage> {
       margin: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          Expanded(child: _buildRevenueCard('오늘 매출', '+ 8.2%', 'assets/images/todayup.png', dotColor: Colors.green)),
+          Expanded(child: _buildRevenueCard('오늘 매출', _fmtPlus(_homeTodayTotal), 'assets/images/todayup.png', dotColor: Colors.green)),
           const SizedBox(width: 15),
-          Expanded(child: _buildRevenueCard('이번주 매출', '+ 4.2%', 'assets/images/monthup.png', dotColor: Colors.blue)),
+          Expanded(child: _buildRevenueCard('이번주 매출', _fmtPlus(_homeWeekTotal), 'assets/images/monthup.png', dotColor: Colors.blue)),
         ],
       ),
     );
@@ -294,6 +326,18 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
     );
+  }
+
+  String _formatCurrency(int? v) {
+    if (v == null) return '-';
+    final s = v.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    return '$s원';
+  }
+
+  String _fmtPlus(int? v) {
+    if (v == null) return '-';
+    final s = v.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    return '+ $s원';
   }
 
     Widget _buildSideMenu() {

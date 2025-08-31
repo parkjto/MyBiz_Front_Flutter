@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/services/naver_link_service.dart';
+import 'package:mybiz_app/services/user_data_service.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
@@ -20,6 +22,8 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
     bool _linked = false;
     String? _lastScrapeAt;
     final _service = NaverLinkService();
+    bool _hasCredentials = false;
+    String? _integrationStatus; // not_configured | configured | active
 
     // 상수 스타일 정의
     static const _titleStyle = TextStyle(
@@ -45,11 +49,27 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
     Future<void> _fetchStatus() async {
         setState(() { _isLoading = true; });
         try {
-            final res = await _service.status();
-            final linked = (res['linked'] == true);
-            final last = res['lastScrapeAt'] as String?;
+            final userStoreId = await UserDataService.getUserStoreId();
+            if (userStoreId == null || userStoreId.isEmpty) {
+                _showSnackBar('스토어 정보가 없습니다. 마이페이지에서 가게 등록/선택 후 이용해 주세요.');
+                setState(() {
+                    _linked = false;
+                    _hasCredentials = false;
+                    _integrationStatus = 'not_configured';
+                    _lastScrapeAt = null;
+                });
+                return;
+            }
+            final res = await _service.status(userStoreId: userStoreId);
+            final data = (res['data'] as Map?) ?? {};
+            final integration = (data['integration'] as Map?) ?? {};
+            final hasCred = integration['has_credentials'] == true;
+            final status = (integration['integration_status'] as String?) ?? 'not_configured';
+            final last = integration['lastScrapeAt'] as String?; // 없으면 null 유지
             setState(() {
-                _linked = linked;
+                _hasCredentials = hasCred;
+                _integrationStatus = status;
+                _linked = hasCred && (status == 'configured' || status == 'active');
                 _lastScrapeAt = last;
             });
         } catch (e) {
@@ -61,14 +81,23 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
 
     Future<void> _login() async {
         if (!_formKey.currentState!.validate()) return;
+        if (!_agree) {
+            _showSnackBar('이용약관 및 개인정보처리방침에 동의해 주세요.');
+            return;
+        }
         setState(() { _isLoading = true; });
         try {
-            final res = await _service.login(
-                userId: _idController.text.trim(), 
-                password: _pwController.text, 
-                agreed: _agree
+            final userStoreId = await UserDataService.getUserStoreId();
+            if (userStoreId == null || userStoreId.isEmpty) {
+                _showSnackBar('스토어 정보가 없습니다. 마이페이지에서 가게 등록/선택 후 이용해 주세요.');
+                return;
+            }
+            final res = await _service.setup(
+                userStoreId: userStoreId,
+                username: _idController.text.trim(),
+                password: _pwController.text,
             );
-            final ok = (res['success'] == true);
+            final ok = res['success'] == true;
             if (ok) {
                 _showSnackBar('로그인/연동 성공');
                 await _fetchStatus();
@@ -85,7 +114,12 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
     Future<void> _unlink() async {
         setState(() { _isLoading = true; });
         try {
-            await _service.unlink();
+            final userStoreId = await UserDataService.getUserStoreId();
+            if (userStoreId == null || userStoreId.isEmpty) {
+                _showSnackBar('스토어 정보가 없습니다.');
+                return;
+            }
+            await _service.unlink(userStoreId: userStoreId);
             _showSnackBar('연동 해제됨');
             await _fetchStatus();
         } catch (e) {
@@ -98,27 +132,32 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
     Future<void> _relink() async {
         setState(() { _isLoading = true; });
         try {
-            await _service.relink();
-            _showSnackBar('재연동 요청됨');
+            final userStoreId = await UserDataService.getUserStoreId();
+            if (userStoreId == null || userStoreId.isEmpty) {
+                _showSnackBar('스토어 정보가 없습니다.');
+                return;
+            }
+            await _service.test(userStoreId: userStoreId);
+            _showSnackBar('연결 테스트 완료');
             await _fetchStatus();
         } catch (e) {
-            _showSnackBar('재연동 실패');
+            String message = '테스트 실패';
+            if (e is DioException) {
+                final data = e.response?.data;
+                if (data is Map && data['message'] is String && (data['message'] as String).isNotEmpty) {
+                    message = '테스트 실패: ${data['message']}';
+                } else if (e.message != null && e.message!.isNotEmpty) {
+                    message = '테스트 실패: ${e.message}';
+                }
+            }
+            _showSnackBar(message);
         } finally {
             setState(() { _isLoading = false; });
         }
     }
 
     Future<void> _scrape() async {
-        setState(() { _isLoading = true; });
-        try {
-            await _service.scrape();
-            _showSnackBar('스크래핑 요청됨');
-            await _fetchStatus();
-        } catch (e) {
-            _showSnackBar('스크래핑 실패');
-        } finally {
-            setState(() { _isLoading = false; });
-        }
+        _showSnackBar('스크래핑 기능은 준비 중입니다.');
     }
 
     void _showSnackBar(String message) {
@@ -375,7 +414,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                     Column(
                         children: [
                             MainHeader(
-                                title: '네이버 연동',
+                                title: '네이버 플레이스 연동',
                                 onBack: () => Navigator.pop(context),
                             ),
                             Expanded(
@@ -404,7 +443,10 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                     child: SizedBox(
                                         width: 36,
                                         height: 36,
-                                        child: CircularProgressIndicator(strokeWidth: 3)
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                          valueColor: AlwaysStoppedAnimation<Color>(CommonStyles.primaryLightColor),
+                                        )
                                     )
                                 )
                             )
@@ -417,8 +459,18 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
 
 
     Widget _buildStatus() {
-        const statusText = '연동됨'; // 현재 상태를 연동된 것으로 고정
-        const statusColor = CommonStyles.primaryLightColor; // 연동된 상태 색상
+        String statusText;
+        Color statusColor;
+        if (_hasCredentials && _integrationStatus == 'active') {
+            statusText = '연동됨';
+            statusColor = const Color(0xFF66BB6A); // 연두색 계열
+        } else if (_hasCredentials && _integrationStatus == 'configured') {
+            statusText = '설정됨(테스트 필요)';
+            statusColor = const Color(0xFF6C757D);
+        } else {
+            statusText = '미연동';
+            statusColor = const Color(0xFFB0B0B0);
+        }
         final time = _lastScrapeAt == null ? '' : '마지막 스크래핑: $_lastScrapeAt';
         
         return Container(
@@ -731,7 +783,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                 child: SizedBox(
                                     height: 56,
                                     child: OutlinedButton(
-                                        onPressed: _isLoading ? null : _relink,
+                                        onPressed: (_isLoading || !_hasCredentials) ? null : _relink,
                                         style: OutlinedButton.styleFrom(
                                             side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
                                             shape: RoundedRectangleBorder(
@@ -739,7 +791,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                                             ),
                                         ),
                                         child: const Text(
-                                            '재연동',
+                                            '연결 테스트',
                                             style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -753,6 +805,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                         ]
                     ),
                     const SizedBox(height: 20),
+                    /* 스크래핑 요청 버튼 비활성화 (백엔드 API 준비 전)
                     SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -775,6 +828,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                             ),
                         ),
                     ),
+                    */
                 ],
             ),
         );

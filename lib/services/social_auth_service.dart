@@ -165,6 +165,7 @@ class _OAuthWebViewDialogState extends State<OAuthWebViewDialog> {
     
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      // 캐시 비활성화로 강제 재인증
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (String url) {
           print('📱 페이지 로딩 시작: $url');
@@ -190,6 +191,9 @@ class _OAuthWebViewDialogState extends State<OAuthWebViewDialog> {
           print('❌ WebView 오류: ${error.description}');
         },
       ))
+      // 캐시 비활성화 설정
+      ..setBackgroundColor(Colors.white)
+      ..enableZoom(false)
       ..loadRequest(Uri.parse(widget.authUrl));
   }
 

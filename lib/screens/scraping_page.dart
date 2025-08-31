@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'package:dio/dio.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
+import 'package:mybiz_app/screens/naver_link_page.dart';
+import 'package:mybiz_app/services/naver_link_service.dart';
+import 'package:mybiz_app/services/review_scraper_service.dart';
+import 'package:mybiz_app/services/user_data_service.dart';
 import 'revenue_analysis_page.dart';
 
 class ScrapingPage extends StatefulWidget {
@@ -14,10 +18,46 @@ class ScrapingPage extends StatefulWidget {
 
 class _ScrapingPageState extends State<ScrapingPage> {
   // 상태 관리
-  final bool _isAnalyzing = false;
+  bool _isAnalyzing = false;
   bool _hasError = false;
   String _errorMessage = '';
   bool _showAnalysisResults = true; // 분석 결과 표시 여부
+  bool _hasData = false; // 리뷰 데이터 존재 여부 (기본: 없음)
+
+  final ReviewScraperService _scraper = ReviewScraperService();
+  final NaverLinkService _naverService = NaverLinkService();
+  bool _isLinked = false; // 네이버 연동 여부
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchIntegrationStatus();
+  }
+
+  Future<void> _fetchIntegrationStatus() async {
+    try {
+      final userStoreId = await UserDataService.getUserStoreId();
+      if (userStoreId == null || userStoreId.isEmpty) {
+        setState(() {
+          _isLinked = false;
+        });
+        return;
+      }
+      final res = await _naverService.status(userStoreId: userStoreId);
+      final data = (res['data'] as Map?) ?? {};
+      final integration = (data['integration'] as Map?) ?? {};
+      final hasCred = integration['has_credentials'] == true;
+      final status = (integration['integration_status'] as String?) ?? 'not_configured';
+      final linked = hasCred && (status == 'configured' || status == 'active');
+      setState(() {
+        _isLinked = linked;
+      });
+    } catch (_) {
+      setState(() {
+        _isLinked = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +77,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
                   
 
                   
-                  // 로딩 상태 표시
-                  if (_isAnalyzing) ...[
-                    _buildLoadingSection(),
-                    const SizedBox(height: 24),
-                  ],
+                  // 로딩 상태 카드는 사용하지 않음 (버튼 자리에서 로딩 처리)
                   
                   // 오류 상태 표시
                   if (_hasError) ...[
@@ -51,18 +87,22 @@ class _ScrapingPageState extends State<ScrapingPage> {
                   
                   // 분석 결과 표시
                   if (_showAnalysisResults && !_isAnalyzing && !_hasError) ...[
-                    _buildCustomerSatisfactionSection(),
-                    const SizedBox(height: 24),
-                    _buildRecentReviewsSection(),
-                    const SizedBox(height: 24),
-                    _buildGoodPointsSection(),
-                    const SizedBox(height: 24),
-                    _buildImprovementAreasSection(),
-                    const SizedBox(height: 24),
-                    
-                    // 액션 버튼들
-                    _buildActionButtons(),
-                    const SizedBox(height: 24),
+                    if (!_hasData) ...[
+                      _buildNoDataSection(),
+                      const SizedBox(height: 24),
+                    ] else ...[
+                      _buildCustomerSatisfactionSection(),
+                      const SizedBox(height: 24),
+                      _buildRecentReviewsSection(),
+                      const SizedBox(height: 24),
+                      _buildGoodPointsSection(),
+                      const SizedBox(height: 24),
+                      _buildImprovementAreasSection(),
+                      const SizedBox(height: 24),
+                      // 액션 버튼들 (스크래핑 완료 후에만 표시)
+                      _buildActionButtons(),
+                      const SizedBox(height: 24),
+                    ],
                   ],
                   
                   const SizedBox(height: 100), // 네비게이션 바 높이만큼 여백 추가
@@ -70,6 +110,122 @@ class _ScrapingPageState extends State<ScrapingPage> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ========== 무데이터 상태 ==========
+  Widget _buildNoDataSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 10),
+          Text(
+            _isLinked ? '리뷰 데이터가 없어요 😭' : '네이버 스마트플레이스\n연동해주세요 😭',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.8,
+              color: Color(0xFF333333),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _isAnalyzing
+                ? '열심히 분석 중입니다!🧐\n최신 리뷰를 모으고 있어요... 잠시만요!'
+                : (_isLinked
+                    ? '버튼을 눌러 최신 리뷰 분석을 해보세요!'
+                    : '네이버 플레이스 연동 후 리뷰 분석을 이용할 수 있어요'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (!_isLinked) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: CommonStyles.brandGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const NaverLinkPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '네이버 플레이스 연동하러 가기',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (_isLinked) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: _isAnalyzing
+                  ? Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00AEFF)),
+                        ),
+                      ),
+                    )
+                  : OutlinedButton(
+                      onPressed: _requestScraping,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '리뷰 분석하기',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF333333),
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 8),
+          ],
         ],
       ),
     );
@@ -495,130 +651,9 @@ class _ScrapingPageState extends State<ScrapingPage> {
     );
   }
 
-  // ========== 재분석 요청 UI ==========
-  Widget _buildReanalysisSection() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.refresh_rounded,
-            size: 48,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '새로운 리뷰 분석',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-              letterSpacing: -0.8,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '새로운 이미지를 업로드하여\n리뷰를 분석해보세요',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _showAnalysisResults = true;
-                  _hasError = false;
-                  _errorMessage = '';
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00AEFF),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                '새로운 분석 시작',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.8,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // (미사용) 재분석 요청 UI 제거
 
-  // ========== 로딩 상태 ==========
-  Widget _buildLoadingSection() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const SizedBox(
-            width: 48,
-            height: 48,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00AEFF)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '리뷰 분석 중...',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-              letterSpacing: -0.8,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '잠시만 기다려주세요',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // (삭제) 상단 로딩 카드 사용 안 함
 
   // ========== 오류 상태 ==========
   Widget _buildErrorSection() {
@@ -774,6 +809,8 @@ class _ScrapingPageState extends State<ScrapingPage> {
     );
   }
 
+  // (삭제) 하단 스크래핑 요청 버튼
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -841,7 +878,70 @@ class _ScrapingPageState extends State<ScrapingPage> {
       // 메시지를 표시할 상태 변수 추가 필요
     });
     
-    // 또는 간단한 print로 대체 (개발 중)
-    print('Message: $message');
+    // 필요 시 스낵바 사용으로 교체 가능
+  }
+
+  // ========== 스크래핑 요청 로직 ==========
+  Future<void> _requestScraping() async {
+    final userStoreId = await UserDataService.getUserStoreId();
+    if (!mounted) return;
+    if (userStoreId == null || userStoreId.isEmpty) {
+      _showSnackBar('스토어 정보가 없습니다. 마이페이지에서 가게 등록/선택 후 이용해 주세요.');
+      return;
+    }
+
+    setState(() {
+      _isAnalyzing = true;
+      _hasError = false;
+      _errorMessage = '';
+    });
+
+    try {
+      final res = await _scraper.scrapeReviews(userStoreId: userStoreId);
+      // 데이터 존재 여부 추정 처리
+      bool hasData = true;
+      final data = res['data'];
+      if (data == null) {
+        hasData = false;
+      } else if (data is Map && data.containsKey('reviews')) {
+        final reviews = data['reviews'];
+        if (reviews is List && reviews.isEmpty) {
+          hasData = false;
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _hasData = hasData;
+      });
+
+      _showSnackBar('스크래핑을 시작했어요! 분석을 준비 중입니다.');
+    } on DioException catch (e) {
+      String message = '스크래핑 요청 실패';
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String && (data['message'] as String).isNotEmpty) {
+        message = data['message'];
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        message = e.message!;
+      }
+      if (!mounted) return;
+      setState(() {
+        _hasError = true;
+        _errorMessage = message;
+      });
+      _showSnackBar(message);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isAnalyzing = false;
+      });
+    }
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 } 

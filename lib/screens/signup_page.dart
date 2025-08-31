@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
+// import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 import 'main_page.dart';
 import 'store_search_popup.dart';
 import '../services/user_data_service.dart';
+import '../services/store_service.dart';
 
 // UserData 클래스 정의
 class UserData {
@@ -72,6 +73,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _businessTypeController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   bool _agreedToTerms = false;
+  String? _selectedPlaceId;
 
   @override
   void initState() {
@@ -669,7 +671,23 @@ class _SignupPageState extends State<SignupPage> {
         UserData.address = _addressController.text;
         UserData.businessPhone = _businessPhoneController.text;
         
-        // UserDataService를 사용하여 데이터 저장
+        // 1) 선택된 매장 정보를 user_stores에 생성 (is_primary=true)
+        try {
+          final storeService = StoreService();
+          final created = await storeService.createStore({
+            'name': _businessNameController.text,
+            'address': _addressController.text,
+            'businessType': _businessTypeController.text,
+            'place_id': _selectedPlaceId,
+          }, isPrimary: true);
+          if (created['id'] is String) {
+            await UserDataService.saveUserStoreId(created['id']);
+          }
+        } catch (e) {
+          // 스토어 생성 실패는 회원가입 자체를 막지 않되 사용자에게는 토스트로 알림
+        }
+
+        // 2) 사용자 기본 데이터 저장 (로컬)
         await UserDataService.saveUserData(
           name: _nameController.text,
           phone: _phoneController.text,
@@ -711,11 +729,12 @@ class _SignupPageState extends State<SignupPage> {
       builder: (context) {
         return StoreSearchPopup(
           isSignupMode: true, // 회원가입 모드로 설정
-          onStoreSelected: (name, address, businessType, businessNumber) {
+          onStoreSelected: (name, address, businessType, placeId) {
             setState(() {
               _businessNameController.text = name;
               _addressController.text = address;
               _businessTypeController.text = businessType;
+              _selectedPlaceId = placeId;
               _businessNameError = false;
               _addressError = false;
               _businessTypeError = false;

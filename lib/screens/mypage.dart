@@ -18,6 +18,7 @@ import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 import '../services/user_data_service.dart';
+import '../services/auth_service.dart';
 
 // UserData 클래스 정의
 class UserData {
@@ -591,15 +592,14 @@ Widget _buildMicButton_REMOVED() {
   // 로그아웃 실행
   Future<void> _performLogout() async {
     try {
-      // 사용자 데이터 삭제
-      await UserDataService.clearUserData();
-      
-      // UserData 클래스 초기화
+      final authService = AuthService();
+      await authService.logout();
+      // 서버 성공 여부와 관계없이 로컬 상태는 정리됨
       UserData.clear();
-      
-      // 앱 상태 업데이트 콜백 호출
       widget.onLogout?.call();
-      
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
       print('✅ 로그아웃 완료');
     } catch (e) {
       print('❌ 로그아웃 실패: $e');

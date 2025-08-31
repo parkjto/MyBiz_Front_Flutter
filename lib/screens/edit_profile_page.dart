@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
-import 'main_page.dart';
 import 'store_search_popup.dart';
 import '../services/user_data_service.dart';
+import '../services/store_service.dart';
 
 // UserData 클래스 정의
 class UserData {
@@ -63,6 +61,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _businessNumberController = TextEditingController();
   final TextEditingController _businessTypeController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  String? _selectedPlaceId;
 
   @override
   void initState() {
@@ -327,6 +326,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             _businessNameController.text = name;
             _addressController.text = address;
             _businessTypeController.text = businessType;
+            _selectedPlaceId = placeId;
           });
         },
       ),
@@ -394,6 +394,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       try {
+        // 1) 기본 사용자 데이터 저장 (로컬)
         // UserDataService를 사용하여 데이터 업데이트
         await UserDataService.saveUserData(
           name: _nameController.text,
@@ -406,6 +407,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
           address: _addressController.text,
           businessPhone: _businessPhoneController.text,
         );
+
+        // 2) user_stores 업데이트 또는 생성
+        try {
+          final storeService = StoreService();
+          final userStoreId = await UserDataService.getUserStoreId();
+          final payload = {
+            'name': _businessNameController.text,
+            'address': _addressController.text,
+            'businessType': _businessTypeController.text,
+            'place_id': _selectedPlaceId,
+          };
+
+          if (userStoreId != null && userStoreId.isNotEmpty) {
+            final updated = await storeService.updateStore(userStoreId, payload);
+            if (updated['id'] is String) {
+              await UserDataService.saveUserStoreId(updated['id']);
+            }
+          } else {
+            final created = await storeService.createStore(payload, isPrimary: true);
+            if (created['id'] is String) {
+              await UserDataService.saveUserStoreId(created['id']);
+            }
+          }
+        } catch (e) {
+          // 스토어 동기화 실패는 프로필 저장 자체를 막지 않되 사용자에게 토스트로 알림할 수도 있음
+        }
         
         // UserData 클래스도 업데이트
         UserData.name = _nameController.text;
