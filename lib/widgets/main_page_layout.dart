@@ -15,18 +15,13 @@ class MainPageLayout extends StatelessWidget {
     
     @override
     Widget build(BuildContext context) {
-        final bottomInset = MediaQuery.of(context).padding.bottom;
-        // 네비게이션 바(약 80) + FAB 여유분을 합산해 초기 렌더에서도 겹침 방지
-        final reservedBottom = 120.0 + (bottomInset > 0 ? bottomInset / 2 : 0);
         return Scaffold(
             backgroundColor: const Color(0xFFF4F5FA),
             body: SafeArea(
                 child: Stack(
                     children: [
-                        Padding(
-                            padding: EdgeInsets.only(bottom: reservedBottom),
-                            child: child,
-                        ),
+                        // 겹침 방지 없이 콘텐츠 표시
+                        child,
                         // 고정된 네비게이션 바
                         Positioned(
                             left: 0,
