@@ -8,7 +8,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 
 class RevenueAnalysisPage extends StatefulWidget {
-  const RevenueAnalysisPage({super.key});
+  final int? initialYear;
+  final int? initialMonth; // 1~12
+  const RevenueAnalysisPage({super.key, this.initialYear, this.initialMonth});
 
   @override
   State<RevenueAnalysisPage> createState() => _RevenueAnalysisPageState();
@@ -59,14 +61,19 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _selectedYear = now.year.toString();
-    _selectedMonth = now.month.toString();
+    // 초기 연/월 지정이 있으면 우선 적용
+    final initY = widget.initialYear ?? now.year;
+    final initM = widget.initialMonth ?? now.month;
+    _selectedYear = initY.toString();
+    _selectedMonth = initM.toString();
     
     // 애니메이션 컨트롤러 초기화를 WidgetsBinding.instance.addPostFrameCallback으로 지연
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _initializeAnimations();
-      // 현재 월을 우선 선택하고, 데이터가 없으면 최신 데이터가 있는 달로 스냅
-      await _snapToLatestMonthWithData();
+      // 초기 지정이 없는 경우에만 최신 데이터 달로 스냅
+      if (widget.initialYear == null && widget.initialMonth == null) {
+        await _snapToLatestMonthWithData();
+      }
       _fetchInsights();
       _fetchSummaryAndWeekly();
       _fetchMonthlySeries();

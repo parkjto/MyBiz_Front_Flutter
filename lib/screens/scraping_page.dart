@@ -128,11 +128,11 @@ class _ScrapingPageState extends State<ScrapingPage> {
                     const SizedBox(height: 24),
                   ],
                   
-                  // 진행 상황 표시 (스크래핑 중일 때)
-                  if (_isAnalyzing && !_hasError) ...[
-                    _buildProgressSection(),
-                    const SizedBox(height: 24),
-                  ],
+                  // 진행 상황 표시 (상단 진행 카드 사용 안 함)
+                  // if (_isAnalyzing && !_hasError) ...[
+                  //   _buildProgressSection(),
+                  //   const SizedBox(height: 24),
+                  // ],
                   
                   // 분석 결과 표시
                   if (_showAnalysisResults && !_hasError) ...[

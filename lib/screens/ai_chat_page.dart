@@ -2,9 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'main_page.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
-import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+import 'revenue_analysis_page.dart';
+import 'scraping_page.dart';
+import 'package:mybiz_app/services/chatbot_service.dart';
+import 'ad_creation_page.dart';
+import 'package:mybiz_app/services/sales_service.dart';
+import 'package:dio/dio.dart';
 
 class AiChatPage extends StatefulWidget {
   const AiChatPage({super.key});
@@ -19,6 +23,8 @@ class _AiChatPageState extends State<AiChatPage>
   final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
+  final ChatbotService _chatbot = ChatbotService();
+  final SalesService _sales = SalesService();
 
   bool _hasText = false;
   bool _isAiTyping = false;
@@ -38,14 +44,12 @@ class _AiChatPageState extends State<AiChatPage>
 
   // --------- 컬러/타이포 ---------
   static const _c333 = Color(0xFF333333);
-  static const _c666 = Color(0xFF666666);
   static const _c999 = Color(0xFF999999);
   static const _cLine = Color(0xFFE5E5E5);
   static const _bgChip = Color(0x0D000000);
   static const _brandBlue = Color(0xFF2D6EFF);
 
-  static const TextStyle _title18 = TextStyle(
-    fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.55, color: _c333);
+  // removed unused _title18
   static const TextStyle _aiName14 =
       TextStyle(fontSize: 14, letterSpacing: -0.55, color: _c999);
   static const TextStyle _aiText16 =
@@ -102,19 +106,242 @@ class _AiChatPageState extends State<AiChatPage>
     _messageController.clear();
     _scrollToBottom();
 
-    // 모킹 응답
-    Future.delayed(const Duration(milliseconds: 800), () {
+    // 의도 분기: 특정 화면 이동/즉시 응답 처리
+    if (_isAdCreationQuery(txt)) {
+      setState(() => _isAiTyping = false);
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const AdCreationPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+      return;
+    }
+
+    if (_isBestsellerQuery(txt)) {
+      _answerBestsellerTop3();
+      return;
+    }
+
+    // 의도 분기: 매출/리뷰 관련 질문일 경우 해당 화면으로 이동
+    if (_isRevenueQuery(txt)) {
+      final month = _extractMonth(txt);
+      setState(() => _isAiTyping = false);
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => RevenueAnalysisPage(
+            initialYear: DateTime.now().year,
+            initialMonth: month,
+          ),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+      return;
+    }
+
+    if (_isReviewQuery(txt)) {
+      setState(() => _isAiTyping = false);
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const ScrapingPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+      return;
+    }
+
+    // 백엔드 챗봇 호출 (개선 방안 등 일반 대화 응답 포함)
+    _handleChatbotReply(txt);
+  }
+
+  Future<void> _handleChatbotReply(String userText) async {
+    try {
+      final res = await _chatbot.sendMessage(text: userText);
+      final success = res['success'] == true;
+      if (!success) throw Exception(res['message'] ?? '요청 실패');
+
+      final data = Map<String, dynamic>.from(res['data'] ?? {});
+      final type = data['type'] as String?; // 'navigation' | 'response' | 'error'
+      final screen = data['screen'] as String?; // 'sales' | 'review' | ...
+      final message = data['message']?.toString() ?? '';
+
       if (!mounted) return;
+
+      if (type == 'navigation' && (screen == 'sales' || screen == 'review')) {
+        // 화면 이동 전 안내 메시지 한 줄 출력
+        setState(() {
+          _messages.add(ChatMessage(text: message.isNotEmpty ? message : '화면으로 이동합니다.', isUser: false, timestamp: DateTime.now()));
+          _isAiTyping = false;
+        });
+        _scrollToBottom();
+
+        await Future.delayed(const Duration(milliseconds: 250));
+        if (screen == 'sales') {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, a, b) => const RevenueAnalysisPage(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
+        } else if (screen == 'review') {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, a, b) => const ScrapingPage(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
+        }
+        return;
+      }
+
+      // 일반 응답 (개선 방안 포함)
       setState(() {
-        _messages.add(ChatMessage(
-          text: "죄송합니다. 현재 AI 응답 기능은 개발 중입니다. 곧 서비스를 이용하실 수 있습니다.",
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
+        _messages.add(ChatMessage(text: message.isNotEmpty ? message : '답변을 불러오지 못했습니다.', isUser: false, timestamp: DateTime.now()));
         _isAiTyping = false;
       });
       _scrollToBottom();
-    });
+    } on DioException catch (e) {
+      String errMsg = '요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      try {
+        final data = e.response?.data;
+        if (data is Map && data['message'] is String) {
+          errMsg = data['message'] as String;
+        } else if (e.message != null) {
+          errMsg = e.message!;
+        }
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: errMsg, isUser: false, timestamp: DateTime.now()));
+        _isAiTyping = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: '요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', isUser: false, timestamp: DateTime.now()));
+        _isAiTyping = false;
+      });
+      _scrollToBottom();
+    }
+  }
+
+  bool _isRevenueQuery(String q) {
+    final t = q.toLowerCase();
+    // 개선안(올리/증가/개선/방법/추천) 요청은 매출 화면 이동에서 제외하고 AI 응답으로 처리
+    if (RegExp(r"(올리|증가|개선|방법|추천)").hasMatch(t)) {
+      return false;
+    }
+    const patterns = [
+      '매출', '매상', '매출액', '월 매출', '이번달 매출', '이번 달 매출', '지난달 매출', '지난 달 매출', '매출 알려줘', '매출알려줘'
+    ];
+    for (final p in patterns) {
+      if (t.contains(p)) return true;
+    }
+    // 숫자+월+매출 패턴 간단 매칭
+    final monthSales = RegExp(r"(\d{1,2})\s*월\s*매출");
+    return monthSales.hasMatch(q);
+  }
+
+  bool _isReviewQuery(String q) {
+    final t = q.toLowerCase();
+    const patterns = [
+      '리뷰', '후기', '평점', '리뷰 분석', '리뷰분석', '리뷰 알려줘', '리뷰알려줘', '리뷰 긍정', '리뷰 부정'
+    ];
+    for (final p in patterns) {
+      if (t.contains(p)) return true;
+    }
+    return false;
+  }
+
+  bool _isAdCreationQuery(String q) {
+    final t = q.toLowerCase();
+    return t.contains('광고 생성') || t.contains('광고 만들어') || t.contains('포스터') || t.contains('홍보물');
+  }
+
+  bool _isBestsellerQuery(String q) {
+    final t = q.toLowerCase();
+    final hasBestWord = t.contains('베스트') || t.contains('베스트셀러') || t.contains('top 3') || t.contains('top3') || t.contains('탑3');
+    final hasItemWord = t.contains('메뉴') || t.contains('상품') || t.contains('제품') || t.contains('품목') || t.contains('판매');
+    return hasBestWord && hasItemWord;
+  }
+
+  Future<void> _answerBestsellerTop3() async {
+    setState(() => _isAiTyping = true);
+    try {
+      final now = DateTime.now().toUtc();
+      final start = DateTime.utc(now.year, now.month, 1, 0, 0, 0).toIso8601String();
+      final end = DateTime.utc(now.year, now.month + 1, 0, 23, 59, 59).toIso8601String();
+      final list = await _sales.getBestsellers(start: start, end: end, limit: 3);
+      final items = List<Map<String, dynamic>>.from(list);
+      final lines = <String>[];
+      for (int i = 0; i < items.length; i++) {
+        final e = items[i];
+        final name = (e['productName'] ?? '-').toString();
+        final total = (e['total'] ?? 0).toString();
+        lines.add('${i + 1}. $name · ${_formatNumber(total)}원');
+      }
+      final msg = lines.isEmpty
+          ? '해당 기간 베스트셀러 데이터를 찾지 못했습니다.'
+          : '이번달 베스트 메뉴 TOP3\n' + lines.join('\n');
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: msg, isUser: false, timestamp: DateTime.now()));
+        _isAiTyping = false;
+      });
+      _scrollToBottom();
+    } on DioException catch (e) {
+      String errMsg = '베스트셀러 조회 중 오류가 발생했습니다.';
+      try {
+        final data = e.response?.data;
+        if (data is Map && data['message'] is String) {
+          errMsg = data['message'] as String;
+        } else if (e.message != null) {
+          errMsg = e.message!;
+        }
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: errMsg, isUser: false, timestamp: DateTime.now()));
+        _isAiTyping = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: '베스트셀러 조회 중 오류가 발생했습니다.', isUser: false, timestamp: DateTime.now()));
+        _isAiTyping = false;
+      });
+      _scrollToBottom();
+    }
+  }
+
+  String _formatNumber(String n) {
+    final numVal = int.tryParse(n) ?? 0;
+    final s = numVal.toString();
+    final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+    return s.replaceAllMapped(reg, (m) => '${m[1]},');
+  }
+
+  int? _extractMonth(String q) {
+    // "2월", "02월", "2 월" 등을 추출 (1~12)
+    final m = RegExp(r"(1[0-2]|0?[1-9])\s*월");
+    final match = m.firstMatch(q);
+    if (match != null) {
+      final val = int.tryParse(match.group(1)!.replaceAll(RegExp(r'^0'), ''));
+      if (val != null && val >= 1 && val <= 12) return val;
+    }
+    return null;
   }
 
   void _scrollToBottom() {
@@ -262,35 +489,7 @@ class _AiChatPageState extends State<AiChatPage>
     );
   }
 
-  // ---- 헤더 ----
-  Widget _buildAppBar() {
-    return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Stack(
-        children: [
-          const Center(child: Text('MyBiz', style: _title18)),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (c, a, b) => const MainPage(),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              ),
-              child: const SizedBox(
-                width: 24, height: 24,
-                child: Icon(Icons.arrow_back_ios, size: 18, color: _c333),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // (removed unused _buildAppBar)
 
   // ---- 채팅 영역(입력중 버블 포함) ----
   Widget _buildChatAreaWithTyping(double bottomRegionHeight) {
@@ -316,7 +515,13 @@ class _AiChatPageState extends State<AiChatPage>
   }
 
   Widget _buildExampleChips() {
-    final qs = ["이번달 매출", "지난 6개월 매출", "이벤트 추천", "이번 분기 정부 정책", "회원정보 변경"];
+    final qs = [
+      "광고 생성 도와줘",
+      "2월 매출 분석",
+      "리뷰 분석 시작",
+      "베스트 메뉴 TOP3 알려줘",
+      "매출 올릴 방법 추천해줘",
+    ];
     return Container(
       margin: const EdgeInsets.only(bottom: 12, top: 6),
       child: Wrap(

@@ -105,7 +105,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                 _showSnackBar('로그인 실패');
             }
         } catch (e) {
-            // _showSnackBar('로그인 오류');
+            // _showSnackBar('로그인 오류 ');
         } finally {
             setState(() { _isLoading = false; });
         }
