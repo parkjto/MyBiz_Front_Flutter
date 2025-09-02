@@ -23,6 +23,27 @@ class ReviewScraperService {
     ));
   }
 
+  // 비동기 스크래핑 시작
+  Future<Map<String, dynamic>> startScraping({required String userStoreId}) async {
+    final res = await _dio.post('/api/scraper/reviews', data: {
+      'userStoreId': userStoreId,
+    });
+    return Map<String, dynamic>.from(res.data ?? {});
+  }
+
+  // 스크래핑 작업 상태 조회
+  Future<Map<String, dynamic>> getScrapingJobStatus({required String jobId}) async {
+    final res = await _dio.get('/api/scraper/jobs/$jobId');
+    return Map<String, dynamic>.from(res.data ?? {});
+  }
+
+  // 사용자의 스크래핑 작업 목록 조회
+  Future<Map<String, dynamic>> getUserScrapingJobs({required String userStoreId}) async {
+    final res = await _dio.get('/api/scraper/jobs/user/$userStoreId');
+    return Map<String, dynamic>.from(res.data ?? {});
+  }
+
+  // 기존 동기 스크래핑 (호환성 유지)
   Future<Map<String, dynamic>> scrapeReviews({required String userStoreId}) async {
     final res = await _dio.post('/api/scraper/reviews', data: {
       'userStoreId': userStoreId,

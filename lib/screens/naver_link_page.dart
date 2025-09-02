@@ -68,12 +68,12 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
             final last = integration['lastScrapeAt'] as String?; // 없으면 null 유지
             setState(() {
                 _hasCredentials = hasCred;
-                _integrationStatus = status;
-                _linked = hasCred && (status == 'configured' || status == 'active');
+                _integrationStatus = hasCred ? 'active' : 'not_configured'; // 자격증명 있으면 바로 active
+                _linked = hasCred; // 자격증명이 있으면 바로 연동됨
                 _lastScrapeAt = last;
             });
         } catch (e) {
-            _showSnackBar('상태 확인 실패');
+            // _showSnackBar('상태 확인 실패');
         } finally {
             setState(() { _isLoading = false; });
         }
@@ -105,7 +105,7 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
                 _showSnackBar('로그인 실패');
             }
         } catch (e) {
-            _showSnackBar('로그인 오류');
+            // _showSnackBar('로그인 오류');
         } finally {
             setState(() { _isLoading = false; });
         }
@@ -461,12 +461,9 @@ class _NaverLinkPageState extends State<NaverLinkPage> {
     Widget _buildStatus() {
         String statusText;
         Color statusColor;
-        if (_hasCredentials && _integrationStatus == 'active') {
+        if (_hasCredentials) {
             statusText = '연동됨';
             statusColor = const Color(0xFF66BB6A); // 연두색 계열
-        } else if (_hasCredentials && _integrationStatus == 'configured') {
-            statusText = '설정됨(테스트 필요)';
-            statusColor = const Color(0xFF6C757D);
         } else {
             statusText = '미연동';
             statusColor = const Color(0xFFB0B0B0);

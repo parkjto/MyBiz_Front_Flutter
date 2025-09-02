@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 import 'package:mybiz_app/screens/naver_link_page.dart';
 import 'package:mybiz_app/services/naver_link_service.dart';
 import 'package:mybiz_app/services/review_scraper_service.dart';
+import 'package:mybiz_app/services/review_analysis_service.dart';
 import 'package:mybiz_app/services/user_data_service.dart';
+import 'package:mybiz_app/data/sample_reviews.dart';
+import 'package:mybiz_app/config/app_config.dart';
 import 'revenue_analysis_page.dart';
 
 class ScrapingPage extends StatefulWidget {
@@ -23,8 +25,15 @@ class _ScrapingPageState extends State<ScrapingPage> {
   String _errorMessage = '';
   bool _showAnalysisResults = true; // 분석 결과 표시 여부
   bool _hasData = false; // 리뷰 데이터 존재 여부 (기본: 없음)
+  Map<String, dynamic>? _analysisData; // 분석 결과 데이터
+  List<Map<String, dynamic>>? _reviews; // 리뷰 데이터
+  
+  // 비동기 스크래핑 관련 상태
+  int _progress = 0; // 진행률 (0-100)
+  String _statusMessage = ''; // 상태 메시지
 
   final ReviewScraperService _scraper = ReviewScraperService();
+  final ReviewAnalysisService _analysisService = ReviewAnalysisService();
   final NaverLinkService _naverService = NaverLinkService();
   bool _isLinked = false; // 네이버 연동 여부
 
@@ -32,6 +41,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
   void initState() {
     super.initState();
     _fetchIntegrationStatus();
+    _loadExistingData(); // 기존 데이터 로드
   }
 
   Future<void> _fetchIntegrationStatus() async {
@@ -59,6 +69,41 @@ class _ScrapingPageState extends State<ScrapingPage> {
     }
   }
 
+  // 기존 데이터 로드
+  Future<void> _loadExistingData() async {
+    try {
+      // 하드코딩 모드에서는 최초 진입 시 자동 로드하지 않고 버튼 누를 때 로딩 후 표시
+      if (SampleReviewData.useHardcodedData) {
+        if (AppConfig.debugMode) {
+          print('🔍 [DEBUG] 하드코딩 모드: 초기 자동 로드는 건너뜁니다. 버튼 클릭 시 로딩 후 표시');
+        }
+        return;
+      }
+
+      // 실제 API 데이터 사용
+      final userStoreId = await UserDataService.getUserStoreId();
+      if (userStoreId == null || userStoreId.isEmpty) return;
+
+      // 리뷰 분석 수행 (기존 리뷰가 있으면 분석, 없으면 빈 결과)
+      final analysisRes = await _analysisService.analyzeReview(userStoreId: userStoreId);
+      if (analysisRes['success'] == true) {
+        final data = analysisRes['data'] as Map<String, dynamic>?;
+        if (data != null) {
+          final reviews = data['reviews'] as List<dynamic>?;
+          final analysis = data['analysis'] as Map<String, dynamic>?;
+          
+          setState(() {
+            _reviews = reviews?.cast<Map<String, dynamic>>() ?? [];
+            _analysisData = analysis;
+            _hasData = reviews != null && reviews.isNotEmpty;
+          });
+        }
+      }
+    } catch (e) {
+      print('기존 데이터 로드 실패: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MainPageLayout(
@@ -75,8 +120,6 @@ class _ScrapingPageState extends State<ScrapingPage> {
                   _buildAnalysisTypeButtons(),
                   const SizedBox(height: 24),
                   
-
-                  
                   // 로딩 상태 카드는 사용하지 않음 (버튼 자리에서 로딩 처리)
                   
                   // 오류 상태 표시
@@ -85,8 +128,14 @@ class _ScrapingPageState extends State<ScrapingPage> {
                     const SizedBox(height: 24),
                   ],
                   
+                  // 진행 상황 표시 (스크래핑 중일 때)
+                  if (_isAnalyzing && !_hasError) ...[
+                    _buildProgressSection(),
+                    const SizedBox(height: 24),
+                  ],
+                  
                   // 분석 결과 표시
-                  if (_showAnalysisResults && !_isAnalyzing && !_hasError) ...[
+                  if (_showAnalysisResults && !_hasError) ...[
                     if (!_hasData) ...[
                       _buildNoDataSection(),
                       const SizedBox(height: 24),
@@ -224,7 +273,6 @@ class _ScrapingPageState extends State<ScrapingPage> {
                       ),
                     ),
             ),
-            const SizedBox(height: 8),
           ],
         ],
       ),
@@ -303,6 +351,23 @@ class _ScrapingPageState extends State<ScrapingPage> {
   }
 
   Widget _buildCustomerSatisfactionSection() {
+    // 실제 분석 데이터에서 만족도 정보 추출
+    final satisfaction = _analysisData?['satisfaction'] as Map<String, dynamic>?;
+    final positive = (satisfaction?['positive'] as int? ?? 0) / 100.0;
+    final neutral = (satisfaction?['neutral'] as int? ?? 0) / 100.0;
+    final negative = (satisfaction?['negative'] as int? ?? 0) / 100.0;
+    
+    // 디버그: 분석 데이터 로그 (디버그 모드일 때만)
+    if (AppConfig.debugMode) {
+      print('🔍 [DEBUG] _analysisData: $_analysisData');
+      print('🔍 [DEBUG] satisfaction: $satisfaction');
+      print('🔍 [DEBUG] positive: $positive, neutral: $neutral, negative: $negative');
+    }
+    
+    final positivePercent = (positive * 100).round();
+    final neutralPercent = (neutral * 100).round();
+    final negativePercent = (negative * 100).round();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -333,21 +398,21 @@ class _ScrapingPageState extends State<ScrapingPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        flex: 75,
+                        flex: positivePercent,
                         child: Container(
                           height: double.infinity,
                           color: const Color(0xFF9BDFFF),
                         ),
                       ),
                       Expanded(
-                        flex: 15,
+                        flex: neutralPercent,
                         child: Container(
                           height: double.infinity,
                           color: const Color(0xFFFFCB9B),
                         ),
                       ),
                       Expanded(
-                        flex: 10,
+                        flex: negativePercent,
                         child: Container(
                           height: double.infinity,
                           color: const Color(0xFFFF9B9B),
@@ -372,15 +437,15 @@ class _ScrapingPageState extends State<ScrapingPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                                              const Text(
-                          '긍정 (75%)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.8,
-                            color: Color(0xFF333333),
-                          ),
+                      Text(
+                        '긍정 ($positivePercent%)',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.8,
+                          color: Color(0xFF333333),
                         ),
+                      ),
                     ],
                   ),
                   Row(
@@ -394,15 +459,15 @@ class _ScrapingPageState extends State<ScrapingPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                                              const Text(
-                          '보통 (15%)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.8,
-                            color: Color(0xFF333333),
-                          ),
+                      Text(
+                        '보통 ($neutralPercent%)',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.8,
+                          color: Color(0xFF333333),
                         ),
+                      ),
                     ],
                   ),
                   Row(
@@ -416,15 +481,15 @@ class _ScrapingPageState extends State<ScrapingPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                                              const Text(
-                          '부정 (10%)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.8,
-                            color: Color(0xFF333333),
-                          ),
+                      Text(
+                        '부정 ($negativePercent%)',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.8,
+                          color: Color(0xFF333333),
                         ),
+                      ),
                     ],
                   ),
                 ],
@@ -437,6 +502,9 @@ class _ScrapingPageState extends State<ScrapingPage> {
   }
 
   Widget _buildRecentReviewsSection() {
+    // 실제 리뷰 데이터 사용 (최대 3개)
+    final recentReviews = _reviews?.take(3).toList() ?? [];
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -450,15 +518,43 @@ class _ScrapingPageState extends State<ScrapingPage> {
           ),
         ),
         const SizedBox(height: 16),
-        Column(
-          children: [
-            _buildReviewItem('에베베게벱', '음식도 맛있고 사장님이 정말 친절해요!', '음식이탈리나와요', '방문일:7.27'),
-            const SizedBox(height: 12),
-            _buildReviewItem('에베베게벱', '음식도 맛있고 사장님이 정말 친절해요! 음식도 맛있고 사장님이 정말 친절해요! 음식도 맛있고 사장님이 정말 친절해요!', '음식이탈리나와요', '방문일:7.27'),
-            const SizedBox(height: 12),
-            _buildReviewItem('에베베게벱', '음식도 맛있고 사장님이 정말 친절해요!', '으아아아악', '방문일:7.27'),
-          ],
-        ),
+        if (recentReviews.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
+            ),
+            child: const Center(
+              child: Text(
+                '등록된 리뷰가 없습니다.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF999999),
+                ),
+              ),
+            ),
+          )
+        else
+          Column(
+            children: recentReviews.asMap().entries.map((entry) {
+              final index = entry.key;
+              final review = entry.value;
+              
+              final author = review['author_nickname'] as String? ?? '익명';
+              final content = review['review_content'] as String? ?? '';
+              final date = review['review_date'] as String? ?? '';
+              final tags = review['extra_metadata'] as Map<String, dynamic>?;
+              final tag = tags?['tags'] as String? ?? '';
+              
+              return Column(
+                children: [
+                  _buildReviewItem(author, content, tag, date),
+                  if (index < recentReviews.length - 1) const SizedBox(height: 12),
+                ],
+              );
+            }).toList(),
+          ),
       ],
     );
   }
@@ -533,6 +629,37 @@ class _ScrapingPageState extends State<ScrapingPage> {
   }
 
   Widget _buildGoodPointsSection() {
+    // 실제 분석 데이터에서 긍정적 키워드 추출
+    List<dynamic> positiveKeywords = _analysisData?['positive_keywords'] as List<dynamic>? ?? [];
+    // 폴백: 분석 데이터에 키워드가 없으면 _reviews에서 수집
+    if ((positiveKeywords).isEmpty && ((_reviews ?? const <Map<String, dynamic>>[])).isNotEmpty) {
+      final Map<String, int> freq = {};
+      final reviewsList = _reviews ?? const <Map<String, dynamic>>[];
+      for (final r in reviewsList) {
+        final meta = r['extra_metadata'] as Map<String, dynamic>?;
+        final List<String> list = (meta?['positive_keywords'] as List?)?.cast<String>() ?? const <String>[];
+        for (final k in list) {
+          freq[k] = (freq[k] ?? 0) + 1;
+        }
+      }
+      positiveKeywords = freq.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      // 렌더링 단계에서 문자열/객체 모두 처리하도록 유지
+      final int reviewLen = reviewsList.isNotEmpty ? reviewsList.length : 1;
+      positiveKeywords = positiveKeywords
+          .take(5)
+          .map((e) => {'keyword': e.key, 'score': e.value / (reviewLen.clamp(1, 9999))})
+          .toList();
+      if (AppConfig.debugMode) {
+        print('🔍 [DEBUG] fallback positiveKeywords from reviews: $positiveKeywords');
+      }
+    }
+    
+    // 디버그: 긍정 키워드 로그 (디버그 모드일 때만)
+    if (AppConfig.debugMode) {
+      print('🔍 [DEBUG] positiveKeywords: $positiveKeywords');
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -552,22 +679,74 @@ class _ScrapingPageState extends State<ScrapingPage> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProgressItem('친절한 서비스', 92, true),
-              const SizedBox(height: 16),
-              _buildProgressItem('신선한 재료', 81, true),
-              const SizedBox(height: 16),
-              _buildProgressItem('넓고 쾌적한 공간', 87, true),
-            ],
-          ),
+          child: positiveKeywords.isEmpty
+              ? const Center(
+                  child: Text(
+                    '긍정적 피드백이 없습니다.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF999999),
+                    ),
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: positiveKeywords.take(3).map((keyword) {
+                    // keyword가 문자열 리스트(예: ['맛있음', ...]) 또는
+                    // 객체 리스트(예: [{'keyword': '맛있음', 'score': 0.8}, ...]) 모두를 처리
+                    final bool isMapKeyword = keyword is Map<String, dynamic>;
+                    final String text = isMapKeyword
+                        ? (keyword['keyword'] as String? ?? '')
+                        : (keyword as String? ?? '');
+                    final double score = isMapKeyword
+                        ? ((keyword['score'] as num?)?.toDouble() ?? 0.0)
+                        : 0.0;
+                    final int percentage = (score * 100).round();
+                    
+                    return Column(
+                      children: [
+                        _buildProgressItem(text, percentage, true),
+                        if (keyword != positiveKeywords.last) const SizedBox(height: 16),
+                      ],
+                    );
+                  }).toList(),
+                ),
         ),
       ],
     );
   }
 
   Widget _buildImprovementAreasSection() {
+    // 실제 분석 데이터에서 부정적 키워드 추출
+    List<dynamic> negativeKeywords = _analysisData?['negative_keywords'] as List<dynamic>? ?? [];
+    // 폴백: 분석 데이터에 키워드가 없으면 _reviews에서 수집
+    if ((negativeKeywords).isEmpty && ((_reviews ?? const <Map<String, dynamic>>[])).isNotEmpty) {
+      final Map<String, int> freq = {};
+      final reviewsList = _reviews ?? const <Map<String, dynamic>>[];
+      for (final r in reviewsList) {
+        final meta = r['extra_metadata'] as Map<String, dynamic>?;
+        final List<String> list = (meta?['negative_keywords'] as List?)?.cast<String>() ?? const <String>[];
+        for (final k in list) {
+          freq[k] = (freq[k] ?? 0) + 1;
+        }
+      }
+      negativeKeywords = freq.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final int reviewLen = reviewsList.isNotEmpty ? reviewsList.length : 1;
+      negativeKeywords = negativeKeywords
+          .take(5)
+          .map((e) => {'keyword': e.key, 'score': e.value / (reviewLen.clamp(1, 9999))})
+          .toList();
+      if (AppConfig.debugMode) {
+        print('🔍 [DEBUG] fallback negativeKeywords from reviews: $negativeKeywords');
+      }
+    }
+    
+    // 디버그: 부정 키워드 로그 (디버그 모드일 때만)
+    if (AppConfig.debugMode) {
+      print('🔍 [DEBUG] negativeKeywords: $negativeKeywords');
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -587,16 +766,37 @@ class _ScrapingPageState extends State<ScrapingPage> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProgressItem('부족한 주차공간', 23, false),
-              const SizedBox(height: 16),
-              _buildProgressItem('적은 음식양', 19, false),
-              const SizedBox(height: 16),
-              _buildProgressItem('긴 대기시간', 12, false),
-            ],
-          ),
+          child: negativeKeywords.isEmpty
+              ? const Center(
+                  child: Text(
+                    '개선이 필요한 부분이 없습니다.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF999999),
+                    ),
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: negativeKeywords.take(3).map((keyword) {
+                    // 문자열/객체 형태 모두 지원
+                    final bool isMapKeyword = keyword is Map<String, dynamic>;
+                    final String text = isMapKeyword
+                        ? (keyword['keyword'] as String? ?? '')
+                        : (keyword as String? ?? '');
+                    final double score = isMapKeyword
+                        ? ((keyword['score'] as num?)?.toDouble() ?? 0.0)
+                        : 0.0;
+                    final int percentage = (score * 100).round();
+                    
+                    return Column(
+                      children: [
+                        _buildProgressItem(text, percentage, false),
+                        if (keyword != negativeKeywords.last) const SizedBox(height: 16),
+                      ],
+                    );
+                  }).toList(),
+                ),
         ),
       ],
     );
@@ -655,6 +855,75 @@ class _ScrapingPageState extends State<ScrapingPage> {
 
   // (삭제) 상단 로딩 카드 사용 안 함
 
+  // ========== 진행 상황 표시 ==========
+  Widget _buildProgressSection() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(CommonStyles.cardRadius),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.analytics_outlined,
+            size: 48,
+            color: Color(0xFF00AEFF),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '리뷰 분석 진행 중',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF333333),
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _statusMessage.isNotEmpty ? _statusMessage : '스크래핑을 진행하고 있습니다...',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          // 진행률 바
+          Container(
+            width: double.infinity,
+            height: 8,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: _progress / 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: CommonStyles.brandGradient,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '$_progress%',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF00AEFF),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ========== 오류 상태 ==========
   Widget _buildErrorSection() {
     return Container(
@@ -712,30 +981,6 @@ class _ScrapingPageState extends State<ScrapingPage> {
                       ),
                     ),
                     child: const Text('다시 시도'),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _hasError = false;
-                        _errorMessage = '';
-                        _showAnalysisResults = false;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[600],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text('새로 시작'),
                   ),
                 ),
               ),
@@ -881,7 +1126,7 @@ class _ScrapingPageState extends State<ScrapingPage> {
     // 필요 시 스낵바 사용으로 교체 가능
   }
 
-  // ========== 스크래핑 요청 로직 ==========
+  // ========== 비동기 스크래핑 요청 로직 ==========
   Future<void> _requestScraping() async {
     final userStoreId = await UserDataService.getUserStoreId();
     if (!mounted) return;
@@ -894,49 +1139,200 @@ class _ScrapingPageState extends State<ScrapingPage> {
       _isAnalyzing = true;
       _hasError = false;
       _errorMessage = '';
+      _progress = 0;
+      _statusMessage = '스크래핑 작업 시작 중...';
     });
 
     try {
-      final res = await _scraper.scrapeReviews(userStoreId: userStoreId);
-      // 데이터 존재 여부 추정 처리
-      bool hasData = true;
-      final data = res['data'];
-      if (data == null) {
-        hasData = false;
-      } else if (data is Map && data.containsKey('reviews')) {
-        final reviews = data['reviews'];
-        if (reviews is List && reviews.isEmpty) {
-          hasData = false;
+      // 1. 하드코딩 모드: 가짜 로딩 → 결과 세팅
+      if (SampleReviewData.useHardcodedData) {
+        // 단계적 진행률 표시 (가벼운 시뮬레이션)
+        for (final step in [15, 35, 60, 85]) {
+          await Future.delayed(const Duration(milliseconds: 400));
+          if (!mounted) return;
+          setState(() {
+            _progress = step;
+            _statusMessage = '분석 중... ($step%)';
+          });
         }
+        await Future.delayed(const Duration(milliseconds: 500));
+        final sampleReviews = SampleReviewData.getFormattedReviews();
+        final analysisResult = SampleReviewData.getAnalysisResult();
+        if (!mounted) return;
+        setState(() {
+          _reviews = sampleReviews;
+          _analysisData = analysisResult;
+          _hasData = true;
+          _isAnalyzing = false;
+          _progress = 100;
+          _statusMessage = '분석 완료';
+        });
+        _showSnackBar('리뷰 ${sampleReviews.length}개로 분석을 완료했습니다!');
+        return;
       }
 
-      if (!mounted) return;
-      setState(() {
-        _hasData = hasData;
-      });
-
-      _showSnackBar('스크래핑을 시작했어요! 분석을 준비 중입니다.');
-    } on DioException catch (e) {
-      String message = '스크래핑 요청 실패';
-      final data = e.response?.data;
-      if (data is Map && data['message'] is String && (data['message'] as String).isNotEmpty) {
-        message = data['message'];
-      } else if (e.message != null && e.message!.isNotEmpty) {
-        message = e.message!;
+      // 1. 스크래핑 요청 (동기/비동기 모두 처리)
+      final startRes = await _scraper.scrapeReviews(userStoreId: userStoreId);
+      
+      // 디버그: API 응답 로그 (디버그 모드일 때만)
+      if (AppConfig.debugMode) {
+        print('🔍 [DEBUG] API 응답: $startRes');
       }
+      
       if (!mounted) return;
+      
+      if (startRes['success'] == true) {
+        final data = startRes['data'] as Map<String, dynamic>?;
+        final jobId = data?['jobId'] as String?;
+        final isFromDB = data?['isFromDB'] as bool? ?? false;
+        
+        // 디버그: 데이터 구조 로그 (디버그 모드일 때만)
+        if (AppConfig.debugMode) {
+          print('🔍 [DEBUG] data: $data');
+          print('🔍 [DEBUG] jobId: $jobId');
+          print('🔍 [DEBUG] isFromDB: $isFromDB');
+        }
+        
+        if (jobId != null) {
+          // 비동기 스크래핑 응답
+          setState(() {
+            _statusMessage = '스크래핑 작업이 시작되었습니다.';
+          });
+          
+          // 2. 진행 상황 폴링 시작
+          _pollJobStatus(jobId);
+        } else if (isFromDB) {
+          // 기존 리뷰 분석 완료 응답
+          if (SampleReviewData.useHardcodedData) {
+            // 하드코딩된 데이터 사용
+            final sampleReviews = SampleReviewData.getFormattedReviews();
+            final analysisResult = SampleReviewData.getAnalysisResult();
+            
+            setState(() {
+              _reviews = sampleReviews;
+              _analysisData = analysisResult;
+              _hasData = true;
+              _isAnalyzing = false;
+            });
+            
+            _showSnackBar('하드코딩된 샘플 리뷰 ${sampleReviews.length}개로 분석을 완료했습니다!');
+          } else {
+            // 실제 API 데이터 사용
+            final reviews = data?['reviews'] as List<dynamic>?;
+            final analysis = data?['analysis'] as Map<String, dynamic>?;
+            
+            setState(() {
+              _reviews = reviews?.cast<Map<String, dynamic>>() ?? [];
+              _analysisData = analysis;
+              _hasData = reviews != null && reviews.isNotEmpty;
+              _isAnalyzing = false;
+            });
+            
+            _showSnackBar('기존 리뷰 ${reviews?.length ?? 0}개로 분석을 완료했습니다!');
+          }
+        } else {
+          // 새로운 스크래핑 완료 응답
+          if (SampleReviewData.useHardcodedData) {
+            // 하드코딩된 데이터 사용
+            final sampleReviews = SampleReviewData.getFormattedReviews();
+            final analysisResult = SampleReviewData.getAnalysisResult();
+            
+            setState(() {
+              _reviews = sampleReviews;
+              _analysisData = analysisResult;
+              _hasData = true;
+              _isAnalyzing = false;
+            });
+            
+            _showSnackBar('하드코딩된 샘플 리뷰 ${sampleReviews.length}개로 분석을 완료했습니다!');
+          } else {
+            // 실제 API 데이터 사용
+            final reviews = data?['reviews'] as List<dynamic>?;
+            final analysis = data?['analysis'] as Map<String, dynamic>?;
+            
+            setState(() {
+              _reviews = reviews?.cast<Map<String, dynamic>>() ?? [];
+              _analysisData = analysis;
+              _hasData = reviews != null && reviews.isNotEmpty;
+              _isAnalyzing = false;
+            });
+            
+            _showSnackBar('새로운 리뷰 스크래핑 및 분석을 완료했습니다!');
+          }
+        }
+      } else {
+        throw Exception(startRes['message'] ?? '스크래핑 시작에 실패했습니다.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _hasError = true;
-        _errorMessage = message;
-      });
-      _showSnackBar(message);
-    } finally {
-      if (!mounted) return;
-      setState(() {
+        _errorMessage = e.toString();
         _isAnalyzing = false;
       });
+      
+      _showSnackBar('스크래핑 시작 실패: ${e.toString()}');
     }
   }
+
+  // 작업 상태 폴링
+  Future<void> _pollJobStatus(String jobId) async {
+    while (mounted && _isAnalyzing) {
+      try {
+        final statusRes = await _scraper.getScrapingJobStatus(jobId: jobId);
+        
+        if (!mounted) return;
+        
+        if (statusRes['success'] == true) {
+          final data = statusRes['data'] as Map<String, dynamic>?;
+          if (data != null) {
+            final status = data['status'] as String? ?? 'pending';
+            final progress = data['progress'] as int? ?? 0;
+            final message = data['message'] as String? ?? '';
+            
+            setState(() {
+              _progress = progress;
+              _statusMessage = message;
+            });
+
+            if (status == 'completed') {
+              // 완료 시 데이터 새로고침
+              await _loadExistingData();
+              setState(() {
+                _isAnalyzing = false;
+                _hasData = true;
+              });
+              _showSnackBar('스크래핑이 완료되었습니다!');
+              break;
+            } else if (status == 'failed') {
+              setState(() {
+                _hasError = true;
+                _errorMessage = message;
+                _isAnalyzing = false;
+              });
+              _showSnackBar('스크래핑 실패: $message');
+              break;
+            }
+          }
+        }
+        
+        // 설정된 간격 후 다시 확인
+        await Future.delayed(Duration(seconds: AppConfig.pollingIntervalSeconds));
+      } catch (e) {
+        if (!mounted) return;
+        
+        setState(() {
+          _hasError = true;
+          _errorMessage = '상태 확인 중 오류: ${e.toString()}';
+          _isAnalyzing = false;
+        });
+        break;
+      }
+    }
+  }
+
+
 
   void _showSnackBar(String message) {
     if (!mounted) return;

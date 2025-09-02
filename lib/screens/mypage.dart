@@ -100,6 +100,7 @@ class _MyPageState extends State<MyPage> {
           UserData.address = userData['address'] ?? '';
         });
         print('✅ 사용자 데이터 로드 완료: ${userData['name']}');
+        print('🏪 가게명: ${UserData.businessName}');
       } else {
         print('⚠️ 저장된 사용자 데이터가 없습니다');
       }

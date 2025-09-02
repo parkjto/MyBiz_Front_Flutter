@@ -65,7 +65,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
     // 애니메이션 컨트롤러 초기화를 WidgetsBinding.instance.addPostFrameCallback으로 지연
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _initializeAnimations();
-      // 데이터가 존재하는 최신 달로 스냅 (없으면 현재 달 유지)
+      // 현재 월을 우선 선택하고, 데이터가 없으면 최신 데이터가 있는 달로 스냅
       await _snapToLatestMonthWithData();
       _fetchInsights();
       _fetchSummaryAndWeekly();
@@ -73,18 +73,40 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
     });
   }
 
-  // 최근 12개월 범위에서 데이터가 존재하는 가장 최신 달로 연/월 선택을 스냅
+  // 현재 월을 우선적으로 선택하고, 데이터가 없을 때만 다른 달로 변경
   Future<void> _snapToLatestMonthWithData() async {
     try {
       final now = DateTime.now().toUtc();
+      
+      // 현재 월에 데이터가 있는지 먼저 확인
+      final currentMonthStart = DateTime.utc(now.year, now.month, 1, 0, 0, 0);
+      final currentMonthEnd = DateTime.utc(now.year, now.month + 1, 0, 23, 59, 59);
+      
+      try {
+        final currentMonthData = await _salesService.getMonthly(
+          start: currentMonthStart.toIso8601String(), 
+          end: currentMonthEnd.toIso8601String()
+        );
+        
+        // 현재 월에 데이터가 있으면 현재 월 유지 (아무것도 하지 않음)
+        if (currentMonthData.isNotEmpty) {
+          return;
+        }
+      } catch (_) {
+        // 현재 월 조회 실패 시 무시하고 계속 진행
+      }
+      
+      // 현재 월에 데이터가 없을 때만 최근 12개월에서 데이터가 있는 달 찾기
       final start = DateTime.utc(now.year, now.month - 11, 1, 0, 0, 0);
       final end = DateTime.utc(now.year, now.month + 1, 0, 23, 59, 59);
       final list = await _salesService.getMonthly(start: start.toIso8601String(), end: end.toIso8601String());
+      
       final withData = list.where((e) {
         final t = e['total'];
         if (t is num) return t > 0;
         return false;
       }).toList();
+      
       if (withData.isNotEmpty) {
         final last = withData.last; // asc 정렬 가정
         final monthStr = (last['month'] ?? '') as String; // YYYY-MM
@@ -101,7 +123,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
         }
       }
     } catch (_) {
-      // 조용히 무시
+      // 조용히 무시하고 현재 월 유지
     }
   }
   
@@ -754,7 +776,7 @@ class _RevenueAnalysisPageState extends State<RevenueAnalysisPage>
             ],
           ),
           const SizedBox(height: 14),
-          _buildMonthlySeriesSection(),
+          // _buildMonthlySeriesSection(), // 요청에 따라 월별 시계열 섹션 임시 비표시
           const SizedBox(height: 14),
           _buildInsightsSection(),
         ],

@@ -48,9 +48,27 @@ class _MainPageState extends State<MainPage> {
       final summary = await _sales.getMonthSummary(year: now.year, month: now.month);
       final today = await _sales.getTodayTotal();
       final week = await _sales.getWeekTotal();
+
+      // 안전한 숫자 캐스팅 처리
+      final monthTotalNum = summary['monthTotal'];
+      final momPctNum = summary['momChangePct'];
+      int parsedMonthTotal = monthTotalNum is num ? monthTotalNum.toInt() : 0;
+      final parsedMomPct = momPctNum is num ? momPctNum.toDouble() : null;
+
+      // 월 합계가 0으로 내려오는 경우 보정: 주차별 합계를 이용해 산출
+      if (parsedMonthTotal == 0) {
+        try {
+          final weeklyTotals = await _sales.getWeeklyByMonth(year: now.year, month: now.month);
+          final fallbackSum = weeklyTotals.fold<int>(0, (s, e) => s + e.toInt());
+          if (fallbackSum > 0) {
+            parsedMonthTotal = fallbackSum;
+          }
+        } catch (_) {}
+      }
+
       setState(() {
-        _homeMonthTotal = (summary['monthTotal'] ?? 0) as int;
-        _homeMomPct = (summary['momChangePct'] as num?)?.toDouble();
+        _homeMonthTotal = parsedMonthTotal;
+        _homeMomPct = parsedMomPct;
         _homeTodayTotal = today;
         _homeWeekTotal = week;
       });
@@ -247,11 +265,25 @@ class _MainPageState extends State<MainPage> {
                 Text(_formatCurrency(_homeMonthTotal), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.8)),
                 Row(
                   children: [
-                    Image.asset('assets/images/mainRevenueUP.png', width: 26, height: 14, fit: BoxFit.contain),
+                    Image.asset(
+                      (_homeMomPct == null || _homeMomPct! >= 0)
+                        ? 'assets/images/mainRevenueUP.png'
+                        : 'assets/images/mainRevenueDown.png',
+                      width: 26,
+                      height: 14,
+                      fit: BoxFit.contain
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       _homeMomPct == null ? '-' : '${_homeMomPct! >= 0 ? '+' : ''}${_homeMomPct!.toStringAsFixed(1)}%',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFFB1FFCE), letterSpacing: -0.8),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _homeMomPct == null
+                          ? Colors.white.withOpacity(0.7)
+                          : (_homeMomPct! >= 0 ? const Color(0xFFB1FFCE) : const Color(0xFFFED75F)),
+                        letterSpacing: -0.8
+                      ),
                     ),
                   ],
                 ),
