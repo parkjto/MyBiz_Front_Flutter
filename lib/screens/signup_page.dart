@@ -1,20 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
+// import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
 import 'main_page.dart';
 import 'store_search_popup.dart';
+import '../services/user_data_service.dart';
+import '../services/store_service.dart';
 
+// UserData 클래스 정의
 class UserData {
   static String name = '';
   static String phone = '';
   static String birthDate = '';
   static String email = '';
+  static String businessPhone = '';
   static String businessName = '';
   static String businessNumber = '';
   static String businessType = '';
   static String address = '';
-  static String businessPhone = '';
+
+  static void initializeFromSocialLogin() {
+    // 소셜 로그인에서 받은 기본 정보로 초기화
+    // 실제로는 SharedPreferences나 다른 저장소에서 가져와야 함
+  }
+
+  static void initialize() {
+    // 기존 사용자 정보로 초기화
+  }
+
+  static void initializeDefault() {
+    name = '';
+    phone = '';
+    birthDate = '';
+    email = '';
+    businessPhone = '';
+    businessName = '';
+    businessNumber = '';
+    businessType = '';
+    address = '';
+  }
+
+  static void clear() {
+    initializeDefault();
+  }
 }
 
 class SignupPage extends StatefulWidget {
@@ -34,6 +62,8 @@ class _SignupPageState extends State<SignupPage> {
   bool _addressError = false;
   bool _showErrors = false;
   bool _termsError = false;
+  bool _isSocialLogin = false;
+  String _socialProvider = '';
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -43,10 +73,41 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _businessTypeController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   bool _agreedToTerms = false;
+  String? _selectedPlaceId;
 
   @override
   void initState() {
     super.initState();
+    _initializeSocialLoginData();
+    _setupControllers();
+  }
+
+  // 소셜 로그인 데이터 초기화
+  Future<void> _initializeSocialLoginData() async {
+    try {
+      UserData.initializeFromSocialLogin();
+      
+      if (UserData.name.isNotEmpty || UserData.email.isNotEmpty) {
+        setState(() {
+          _isSocialLogin = true;
+          _socialProvider = UserData.name.isNotEmpty ? '소셜 로그인' : '';
+          
+          // 소셜 로그인에서 받은 정보 자동 입력
+          if (UserData.name.isNotEmpty) {
+            _nameController.text = UserData.name;
+          }
+          if (UserData.email.isNotEmpty) {
+            // 이메일 필드가 있다면 여기에 추가
+          }
+        });
+      }
+    } catch (e) {
+      print('소셜 로그인 데이터 초기화 실패: $e');
+    }
+  }
+
+  // 컨트롤러 설정
+  void _setupControllers() {
     _nameController.addListener(() {
       if (_showErrors && _nameController.text.isNotEmpty && _nameError) {
         setState(() => _nameError = false);
@@ -74,7 +135,7 @@ class _SignupPageState extends State<SignupPage> {
     });
     _businessTypeController.addListener(() {
       if (_showErrors && _businessTypeController.text.isNotEmpty && _businessTypeError) {
-        setState(() => _businessTypeError = false);
+        setState(() => _businessNumberError = false);
       }
     });
     _addressController.addListener(() {
@@ -137,12 +198,44 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 50),
+                // 소셜 로그인 사용자 표시
+                if (_isSocialLogin) ...[
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF2196F3), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF2196F3),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$_socialProvider으로 로그인되었습니다. 추가 정보를 입력해주세요.',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF1976D2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 30),
                 _buildInputField(
                   label: '이름',
                   controller: _nameController,
                   hint: '이름을 입력해주세요',
                   validator: (v) => null,
+                  readOnly: _isSocialLogin, // 소셜 로그인 사용자는 읽기 전용
                 ),
                 const SizedBox(height: 20),
                 _buildInputField(
@@ -187,10 +280,12 @@ class _SignupPageState extends State<SignupPage> {
     required String hint,
     required String? Function(String?) validator,
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     bool hasError = false;
-    if (label == '이름') hasError = _showErrors && _nameError;
-    else if (label == '개인 전화번호') hasError = _showErrors && _phoneError;
+    if (label == '이름') {
+      hasError = _showErrors && _nameError;
+    } else if (label == '개인 전화번호') hasError = _showErrors && _phoneError;
     else if (label == '상호명') hasError = _showErrors && _businessNameError;
     else if (label == '사업자등록번호') hasError = _showErrors && _businessNumberError;
     else if (label == '가게 전화번호') hasError = _showErrors && _businessPhoneError;
@@ -240,6 +335,7 @@ class _SignupPageState extends State<SignupPage> {
               letterSpacing: -0.8,
               color: const Color(0xFF333333),
             ),
+            readOnly: readOnly,
           ),
         ),
       ],
@@ -539,7 +635,7 @@ class _SignupPageState extends State<SignupPage> {
 
   Widget _buildStartButton() {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() {
           _showErrors = true;
           _nameError = _nameController.text.isEmpty;
@@ -574,6 +670,34 @@ class _SignupPageState extends State<SignupPage> {
         UserData.businessType = _businessTypeController.text;
         UserData.address = _addressController.text;
         UserData.businessPhone = _businessPhoneController.text;
+        
+        // 1) 선택된 매장 정보를 user_stores에 생성 (is_primary=true)
+        try {
+          final storeService = StoreService();
+          final created = await storeService.createStore({
+            'name': _businessNameController.text,
+            'address': _addressController.text,
+            'businessType': _businessTypeController.text,
+            'place_id': _selectedPlaceId,
+          }, isPrimary: true);
+          if (created['id'] is String) {
+            await UserDataService.saveUserStoreId(created['id']);
+          }
+        } catch (e) {
+          // 스토어 생성 실패는 회원가입 자체를 막지 않되 사용자에게는 토스트로 알림
+        }
+
+        // 2) 사용자 기본 데이터 저장 (로컬)
+        await UserDataService.saveUserData(
+          name: _nameController.text,
+          phone: _phoneController.text,
+          businessName: _businessNameController.text,
+          businessNumber: _businessNumberController.text,
+          businessType: _businessTypeController.text,
+          address: _addressController.text,
+          businessPhone: _businessPhoneController.text,
+        );
+        
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainPage()));
       },
       child: Container(
@@ -604,11 +728,13 @@ class _SignupPageState extends State<SignupPage> {
       barrierDismissible: true,
       builder: (context) {
         return StoreSearchPopup(
-          onStoreSelected: (name, address, businessType, businessNumber) {
+          isSignupMode: true, // 회원가입 모드로 설정
+          onStoreSelected: (name, address, businessType, placeId) {
             setState(() {
               _businessNameController.text = name;
               _addressController.text = address;
               _businessTypeController.text = businessType;
+              _selectedPlaceId = placeId;
               _businessNameError = false;
               _addressError = false;
               _businessTypeError = false;

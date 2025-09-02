@@ -1,9 +1,17 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/image_upload_service.dart';
+import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../services/api_client.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:gal/gal.dart';
 import 'ai_chat_page.dart';
 import 'main_page.dart';
 import 'mypage.dart';
@@ -24,9 +32,26 @@ class _AdCreationPageState extends State<AdCreationPage> {
   final _requestController = TextEditingController();
   final ImageUploadService _uploadService = ImageUploadService();
 
-  List<File> _selectedImages = [];
+  File? _selectedImage;
   bool _isGenerating = false;
   String? _uploadError;
+  double? _selectedImageAspect;
+
+  // 광고 생성 결과 상태
+  Map<String, dynamic>? _generatedAdResult;
+  bool _hasGeneratedAd = false;
+  double? _generatedAspect;
+  Uint8List? _generatedImageBytes;
+
+  // 단계별 진행 상태
+  String _currentStep = '';
+  int _currentStepNumber = 0;
+  final List<String> _steps = [
+    '이미지 분석 중...',
+    '텍스트 최적화 중...',
+    '광고 디자인 생성 중...',
+    '광고 생성 완료!'
+  ];
 
   // 브랜드 그라데이션
   static const LinearGradient _brandGrad = CommonStyles.brandGradient;
@@ -103,8 +128,8 @@ class _AdCreationPageState extends State<AdCreationPage> {
         ),
         const SizedBox(height: 12),
 
-        // 이미지가 있는 경우
-        if (_selectedImages.isNotEmpty) ...[
+        // 생성된 광고가 있는 경우: 결과 렌더링
+        if (_hasGeneratedAd && _generatedAdResult != null) ...[
           LayoutBuilder(
             builder: (context, cons) => SizedBox(
               width: cons.maxWidth, // ✅ 100% 보장
@@ -116,64 +141,146 @@ class _AdCreationPageState extends State<AdCreationPage> {
                 ),
                 child: Column(
                   children: [
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        childAspectRatio: 1,
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
-                      itemCount: _selectedImages.length + (_selectedImages.length < 5 ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == _selectedImages.length) {
-                          return GestureDetector(
-                            onTap: _pickImages,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: const Icon(Icons.add_photo_alternate, color: Colors.grey, size: 24),
-                            ),
-                          );
-                        }
-                        return Stack(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 500, minHeight: 200),
+                          child: _generatedAdResult!['poster_url'] != null
+                              ? (_generatedAspect != null
+                                  ? AspectRatio(
+                                      aspectRatio: _generatedAspect!,
+                                      child: _buildGeneratedAdImage(_generatedAdResult!['poster_url']),
+                                    )
+                                  : _buildGeneratedAdImage(_generatedAdResult!['poster_url']))
+                              : Container(color: Colors.grey[100]),
+                        ),
+                      ),
+                    ),
+                    if (_getPurposeRecommendationText().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  _selectedImages[index],
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 4,
-                              right: 4,
-                              child: GestureDetector(
-                                onTap: () => _removeImage(index),
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 14),
-                                ),
+                            const Icon(Icons.recommend, color: Color(0xFF00AEFF), size: 18),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                _getPurposeRecommendationText(),
+                                style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4),
                               ),
                             ),
                           ],
-                        );
-                      },
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _createNewAd,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFE5E5E5)),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('새 광고 만들기'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _downloadGeneratedAd,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00AEFF),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              child: const Text('다운로드', style: TextStyle(color: Colors.white)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ] else if (_selectedImage != null) ...[
+          // 단일 선택 이미지 미리보기 + 변경/삭제 버튼
+          LayoutBuilder(
+            builder: (context, cons) => SizedBox(
+              width: cons.maxWidth,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 400, minHeight: 180),
+                          child: _selectedImageAspect != null
+                              ? AspectRatio(
+                                  aspectRatio: _selectedImageAspect!,
+                                  child: Image.file(_selectedImage!, fit: BoxFit.contain),
+                                )
+                              : Image.file(_selectedImage!, fit: BoxFit.contain),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _pickImage,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFE5E5E5)),
+                                foregroundColor: const Color(0xFF00AEFF),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('이미지 변경'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _removeSelectedImage,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFE5E5E5)),
+                                foregroundColor: const Color(0xFF00AEFF),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text('이미지 삭제'),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -186,7 +293,7 @@ class _AdCreationPageState extends State<AdCreationPage> {
             builder: (context, cons) => SizedBox(
               width: cons.maxWidth, // ✅ 100% 보장
               child: GestureDetector(
-                onTap: _pickImages,
+                onTap: _pickImage,
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
@@ -219,7 +326,7 @@ class _AdCreationPageState extends State<AdCreationPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '최대 5장까지 선택 가능',
+                        '이미지 1장만 선택 가능',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w300,
@@ -286,12 +393,12 @@ class _AdCreationPageState extends State<AdCreationPage> {
           maxLines: 4,
           decoration: InputDecoration(
             hintText:
-                '예: 신메뉴 출시를 알리는 밝고 활기찬 분위기의 광고를 만들어주세요. 젊은 층을 타겟으로 하고, 제품의 맛을 강조해주세요.',
-            hintStyle: TextStyle(
+                '매장명 / 메뉴 / 슬로건 형식으로 입력하세요.\n예) MyBiz / Ice Americano / 감각적이고 편안한 공간',
+            hintStyle: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
               letterSpacing: -0.8,
-              color: const Color(0xFF999999),
+              color: Color(0xFF999999),
               height: 1.4,
             ),
             border: OutlineInputBorder(
@@ -377,6 +484,11 @@ Widget _buildGenerateButton() {
 
   // ========== Loading preview ==========
   Widget _buildLoadingSection() {
+    // 단계 기반 로딩 UI
+    final total = _steps.length;
+    final current = _currentStepNumber.clamp(0, total);
+    final progress = total == 0 ? null : (current / total);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -397,27 +509,39 @@ Widget _buildGenerateButton() {
             ),
           ),
           const SizedBox(height: 16),
-          const LinearProgressIndicator(
-            backgroundColor: Color(0xFFE0E0E0),
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00AEFF)),
+          LinearProgressIndicator(
+            backgroundColor: const Color(0xFFE0E0E0),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00AEFF)),
+            value: progress,
           ),
           const SizedBox(height: 12),
-          Text(
-            'AI가 요청사항을 분석하여 최적의 광고를 생성하고 있습니다',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w300,
-              letterSpacing: -0.8,
-              color: Colors.grey[600],
+          if (_currentStep.isNotEmpty)
+            Text(
+              _currentStep,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w300,
+                letterSpacing: -0.8,
+                color: Colors.grey[600],
+              ),
+            )
+          else
+            Text(
+              'AI가 요청사항을 분석하여 최적의 광고를 생성하고 있습니다',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w300,
+                letterSpacing: -0.8,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 
   // ========== Pick / remove ==========
-  Future<void> _pickImages() async {
+  Future<void> _pickImage() async {
     try {
       final hasPermission = await _uploadService.requestGalleryPermission();
       if (!hasPermission) {
@@ -428,42 +552,36 @@ Widget _buildGenerateButton() {
       }
 
       final ImagePicker picker = ImagePicker();
-      final List<XFile> images = await picker.pickMultiImage();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
 
-      if (images.isNotEmpty) {
-        if (_selectedImages.length + images.length > 5) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('최대 5장까지 선택 가능합니다.'), backgroundColor: Colors.orange),
-          );
-          return;
-        }
-
-        final List<File> validImages = [];
-        for (final image in images) {
-          final file = File(image.path);
-          if (!_uploadService.isValidImageFormat(file.path)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('지원하지 않는 이미지 형식입니다. (JPG, PNG, WEBP만 지원)'),
-                backgroundColor: Colors.red,
-              ),
-            );
-            continue;
-          }
-          if (!_uploadService.isValidImageSize(file)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('이미지 크기가 너무 큽니다. (최대 10MB)'), backgroundColor: Colors.red),
-            );
-            continue;
-          }
-          validImages.add(file);
-        }
-
-        setState(() {
-          _selectedImages.addAll(validImages);
-          _uploadError = null;
-        });
+      final file = File(image.path);
+      if (!_uploadService.isValidImageFormat(file.path)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('지원하지 않는 이미지 형식입니다. (JPG, PNG, WEBP만 지원)'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
       }
+      if (!_uploadService.isValidImageSize(file)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미지 크기가 너무 큽니다. (최대 10MB)'), backgroundColor: Colors.red),
+        );
+        return;
+      }
+
+      final bytes = await file.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final w = frame.image.width.toDouble();
+      final h = frame.image.height.toDouble();
+      setState(() {
+        _selectedImage = file;
+        _selectedImageAspect = w / (h == 0 ? 1 : h);
+        _uploadError = null;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다: $e'), backgroundColor: Colors.red),
@@ -471,9 +589,9 @@ Widget _buildGenerateButton() {
     }
   }
 
-  void _removeImage(int index) {
+  void _removeSelectedImage() {
     setState(() {
-      _selectedImages.removeAt(index);
+      _selectedImage = null;
     });
   }
 
@@ -495,7 +613,7 @@ Widget _buildGenerateButton() {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // 헤더
-                  Text(
+                  const Text(
                     'AI 광고 생성 가이드',
                     style: TextStyle(
                       fontSize: 18,
@@ -524,7 +642,7 @@ Widget _buildGenerateButton() {
                           _buildGuidePage(
                             icon: Icons.upload_file,
                             title: '이미지 업로드',
-                            description: '광고에 사용할 이미지를\n최대 5장까지 선택하세요',
+                            description: '광고에 사용할 이미지를\n1장 선택하세요',
                             color: Colors.grey[600]!,
                           ),
                           _buildGuidePage(
@@ -571,21 +689,21 @@ Widget _buildGenerateButton() {
                     ),
                     child: Column(
                       children: [
-                        Row(
+                        const Row(
                           children: [
                             Icon(
                               Icons.info_outline,
                               size: 16,
-                              color: const Color(0xFF00AEFF),
+                              color: Color(0xFF00AEFF),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               '사용 팁',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: -0.8,
-                                color: const Color(0xFF00AEFF),
+                                color: Color(0xFF00AEFF),
                               ),
                             ),
                           ],
@@ -666,7 +784,7 @@ Widget _buildGenerateButton() {
           const SizedBox(height: 20),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.8,
@@ -690,30 +808,220 @@ Widget _buildGenerateButton() {
     );
   }
 
-  // ========== Generate (mock) ==========
-  void _generateAd() {
-    if (_selectedImages.isEmpty) {
-      _showCustomSnackBar('이미지를 선택해주세요', Colors.orange);
+  // 사용자가 입력한 요청 텍스트를 간단 규칙으로 구조화
+  Map<String, dynamic> _parseRequestToInputs(String text) {
+    final result = {
+      'brand_name': '',
+      'main_product': '',
+      'slogan': '',
+      'event_info': '',
+      'contact_info': '',
+    };
+
+    if (text.isEmpty) return result;
+
+    // 1차: 엄격한 슬래시 포맷 "브랜드 / 메뉴 / 슬로건"
+    final slashParts = text
+        .split('/')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (slashParts.isNotEmpty) result['brand_name'] = slashParts[0];
+    if (slashParts.length >= 2) result['main_product'] = slashParts[1];
+    if (slashParts.length >= 3) result['slogan'] = slashParts[2];
+
+    // 2차: 슬래시가 없을 때를 위한 라벨 기반(하위호환)
+    if ((result['main_product'] as String).isEmpty || (result['slogan'] as String).isEmpty) {
+      final parts = text.split('/').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      for (final p in parts.skip(1)) {
+        final lower = p.toLowerCase();
+        if ((result['main_product'] as String).isEmpty && (lower.startsWith('대표 메뉴') || lower.startsWith('메뉴') || lower.contains('menu'))) {
+          final idx = p.indexOf(':');
+          final value = idx >= 0 ? p.substring(idx + 1).trim() : p;
+          result['main_product'] = value.split(',').first.trim();
+          continue;
+        }
+        if ((result['slogan'] as String).isEmpty && (lower.startsWith('슬로건') || lower.contains('slogan'))) {
+          final idx = p.indexOf(':');
+          result['slogan'] = (idx >= 0 ? p.substring(idx + 1) : p).trim();
+          continue;
+        }
+      }
+    }
+    return result;
+  }
+
+  // ========== Generate (real API) ==========
+  Future<void> _generateAd() async {
+    if (_selectedImage == null) {
+      _showSnackBar('이미지를 선택해주세요', Colors.orange);
       return;
     }
     if (_requestController.text.trim().isEmpty) {
-      _showCustomSnackBar('광고 요청사항을 입력해주세요', Colors.orange);
+      _showSnackBar('매장명과 주요 메뉴를 포함해 요청사항을 입력해주세요', Colors.orange);
       return;
     }
 
-    setState(() => _isGenerating = true);
-    Future.delayed(const Duration(seconds: 3), () {
-      setState(() => _isGenerating = false);
-      _showCustomSnackBar('광고가 성공적으로 생성되었습니다!', const Color(0xFF4CAF50));
-      _showGeneratedAdDialog();
-    });
+    try {
+      setState(() {
+        _isGenerating = true;
+        _currentStepNumber = 1;
+        _currentStep = _steps[0]; // 이미지 분석 중...
+      });
+
+      final dio = ApiClient().dio;
+
+      // 1) 이미지 업로드 + 분석 호출
+      final analyzeForm = FormData.fromMap({
+        'image': await MultipartFile.fromFile(_selectedImage!.path, filename: 'ad_image.jpg'),
+      });
+      final analyzeResp = await dio.post(
+        '/api/posters/analyze-and-generate-posters',
+        data: analyzeForm,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+
+      final analyzeData = analyzeResp.data;
+      if (analyzeData is! Map || analyzeData['image_analysis'] == null) {
+        throw Exception('이미지 분석 응답이 올바르지 않습니다');
+      }
+      final imageAnalysis = Map<String, dynamic>.from(analyzeData['image_analysis'] as Map);
+
+      setState(() {
+        _currentStepNumber = 2;
+        _currentStep = _steps[1]; // 텍스트 최적화 중...
+      });
+
+      // 2) 업로드 이미지 위 합성 생성 호출 (요구사항 준수)
+      final userInputs = _parseRequestToInputs(_requestController.text.trim());
+      final composeForm = FormData.fromMap({
+        'style': 'sns',
+        'image': await MultipartFile.fromFile(_selectedImage!.path, filename: 'ad_image.jpg'),
+        'user_inputs': jsonEncode(userInputs),
+        'image_analysis': jsonEncode(imageAnalysis),
+      });
+
+      final composeResp = await dio.post(
+        '/api/posters/generate-single-composite',
+        data: composeForm,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+
+      final genData = composeResp.data;
+      if (genData is! Map || genData['after_b64'] == null) {
+        throw Exception('합성 포스터 생성 응답이 올바르지 않습니다');
+      }
+      final b64 = genData['after_b64'] as String;
+      final bytes = base64Decode(b64);
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final w = frame.image.width.toDouble();
+      final h = frame.image.height.toDouble();
+      final posterUrl = 'data:image/webp;base64,$b64';
+
+      setState(() {
+        _currentStepNumber = 3;
+        _currentStep = _steps[2]; // 광고 디자인 생성 중...
+      });
+
+      setState(() {
+        _generatedAdResult = {
+          'poster_url': posterUrl,
+          'style': 'sns',
+        };
+        _hasGeneratedAd = true;
+        _isGenerating = false;
+        _currentStepNumber = 4;
+        _currentStep = _steps[3]; // 광고 생성 완료!
+        _generatedAspect = (w > 0 && h > 0) ? (w / h) : _generatedAspect;
+        _generatedImageBytes = bytes;
+      });
+
+      _showSnackBar('AI 광고가 성공적으로 생성되었습니다!', const Color(0xFF4CAF50));
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map && (e.response!.data['message'] is String)
+          ? e.response!.data['message']
+          : e.message ?? '네트워크 오류가 발생했습니다';
+      _showSnackBar('생성 실패: $msg', Colors.red);
+      setState(() {
+        _isGenerating = false;
+      });
+    } catch (e) {
+      _showSnackBar('생성 실패: $e', Colors.red);
+      setState(() {
+        _isGenerating = false;
+      });
+    }
   }
 
-  void _showCustomSnackBar(String message, Color backgroundColor) {
-    // MainPageLayout을 사용할 때는 ScaffoldMessenger 대신 다른 방법 사용
-    // 여기서는 간단히 setState로 상태를 변경하여 UI에 표시
+  void _showSnackBar(String message, Color backgroundColor) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+    );
+  }
+
+  // 생성 결과 이미지 렌더링 (Base64/네트워크 모두 지원)
+  Widget _buildGeneratedAdImage(String urlOrData) {
+    if (urlOrData.startsWith('data:image')) {
+      final bytes = _generatedImageBytes ?? base64Decode(urlOrData.split(',').last);
+      return Image.memory(bytes, fit: BoxFit.contain, gaplessPlayback: true, filterQuality: FilterQuality.high);
+    }
+    return Image.network(urlOrData, fit: BoxFit.contain, gaplessPlayback: true, filterQuality: FilterQuality.high);
+  }
+
+  // 다운로드: 네트워크는 URL 오픈, Base64는 임시 파일로 저장
+  Future<void> _downloadGeneratedAd() async {
+    final posterUrl = _generatedAdResult?['poster_url'];
+    if (posterUrl == null || posterUrl is! String || posterUrl.isEmpty) {
+      _showSnackBar('다운로드할 광고가 없습니다.', Colors.orange);
+      return;
+    }
+    try {
+      if (posterUrl.startsWith('data:image')) {
+        await _saveBase64ToGallery(posterUrl);
+        _showSnackBar('갤러리에 저장됩니다!', const Color(0xFF4CAF50));
+      } else {
+        final uri = Uri.parse(posterUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          _showSnackBar('URL을 열 수 없습니다.', Colors.red);
+        }
+      }
+    } catch (e) {
+      _showSnackBar('다운로드 실패: $e', Colors.red);
+    }
+  }
+
+  Future<void> _saveBase64ToGallery(String dataUrl) async {
+    final base64Part = dataUrl.split(',').last;
+    final bytes = base64Decode(base64Part);
+    await Gal.putImageBytes(bytes);
+  }
+
+  // (측정은 생성 직후 1회 수행, 빌드 중 setState 방지)
+
+  // 추천 목적 텍스트 안전 접근
+  String _getPurposeRecommendationText() {
+    final result = _generatedAdResult;
+    if (result == null) return '';
+    final rec = result['purpose_recommendation'];
+    if (rec is Map && rec['recommended_purpose'] is String) {
+      final p = rec['recommended_purpose'] as String;
+      return 'AI 추천 목적: $p';
+    }
+    return '';
+  }
+
+  void _createNewAd() {
     setState(() {
-      // 임시로 상태를 변경하여 사용자에게 알림
+      _hasGeneratedAd = false;
+      _generatedAdResult = null;
+      _selectedImage = null;
+      _requestController.clear();
+      _currentStepNumber = 0;
+      _currentStep = '';
     });
   }
 
@@ -739,14 +1047,14 @@ Widget _buildGenerateButton() {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   '요청하신 광고가 성공적으로 생성되었습니다.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     letterSpacing: -0.8,
-                    color: const Color(0xFF666666),
+                    color: Color(0xFF666666),
                     height: 1.4,
                   ),
                 ),

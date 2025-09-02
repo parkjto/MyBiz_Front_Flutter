@@ -17,15 +17,102 @@ import 'package:mybiz_app/widgets/main_bottom_nav.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/main_page_layout.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
+import '../services/user_data_service.dart';
+import '../services/auth_service.dart';
+
+// UserData 클래스 정의
+class UserData {
+  static String name = '';
+  static String phone = '';
+  static String birthDate = '';
+  static String email = '';
+  static String businessPhone = '';
+  static String businessName = '';
+  static String businessNumber = '';
+  static String businessType = '';
+  static String address = '';
+
+  static void initializeFromSocialLogin() {
+    // 소셜 로그인에서 받은 기본 정보로 초기화
+    // 실제로는 SharedPreferences나 다른 저장소에서 가져와야 함
+  }
+
+  static void initialize() {
+    // 기존 사용자 정보로 초기화
+  }
+
+  static void initializeDefault() {
+    name = '';
+    phone = '';
+    birthDate = '';
+    email = '';
+    businessPhone = '';
+    businessName = '';
+    businessNumber = '';
+    businessType = '';
+    address = '';
+  }
+
+  static void clear() {
+    initializeDefault();
+  }
+}
 
 class MyPage extends StatefulWidget {
-  const MyPage({super.key});
+  final VoidCallback? onLogout;
+  
+  const MyPage({super.key, this.onLogout});
 
   @override
   State<MyPage> createState() => _MyPageState();
 }
 
 class _MyPageState extends State<MyPage> {
+  Map<String, dynamic> _userData = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // 저장된 사용자 데이터 불러오기
+  Future<void> _loadUserData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final userData = await UserDataService.getUserData();
+      if (userData != null) {
+        setState(() {
+          _userData = userData;
+          // UserData 클래스에도 동기화
+          UserData.name = userData['name'] ?? '';
+          UserData.phone = userData['phone'] ?? '';
+          UserData.birthDate = userData['birthDate'] ?? '';
+          UserData.email = userData['email'] ?? '';
+          UserData.businessPhone = userData['businessPhone'] ?? '';
+          UserData.businessName = userData['businessName'] ?? '';
+          UserData.businessNumber = userData['businessNumber'] ?? '';
+          UserData.businessType = userData['businessType'] ?? '';
+          UserData.address = userData['address'] ?? '';
+        });
+        print('✅ 사용자 데이터 로드 완료: ${userData['name']}');
+        print('🏪 가게명: ${UserData.businessName}');
+      } else {
+        print('⚠️ 저장된 사용자 데이터가 없습니다');
+      }
+    } catch (e) {
+      print('❌ 사용자 데이터 로드 실패: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MainPageLayout(
@@ -34,22 +121,26 @@ class _MyPageState extends State<MyPage> {
         children: [
           const MainHeader(title: '마이페이지'),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProfileSection(),
-                  const SizedBox(height: CommonStyles.sectionGap),
-                  _buildMyInfoSection(),
-                  const SizedBox(height: CommonStyles.sectionGap),
-                  _buildStoreInfoSection(),
-                  const SizedBox(height: CommonStyles.sectionGap),
-                  _buildOtherSection(),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProfileSection(),
+                        const SizedBox(height: CommonStyles.sectionGap),
+                        _buildMyInfoSection(),
+                        const SizedBox(height: CommonStyles.sectionGap),
+                        _buildStoreInfoSection(),
+                        const SizedBox(height: CommonStyles.sectionGap),
+                        _buildOtherSection(),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
@@ -93,12 +184,12 @@ class _MyPageState extends State<MyPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${UserData.name}님',
+                  '${_userData['name']?.isNotEmpty == true ? _userData['name'] : '사용자'}님',
                   style: CommonStyles.titleStyle,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Tel. ${UserData.phone}',
+                  'Tel. ${_userData['phone']?.isNotEmpty == true ? _userData['phone'] : '번호 없음'}',
                   style: CommonStyles.labelStyle,
                 ),
               ],
@@ -121,10 +212,10 @@ class _MyPageState extends State<MyPage> {
             style: CommonStyles.titleStyle,
           ),
           const SizedBox(height: 12),
-          _buildInfoRow('이름', UserData.name, showDivider: true),
-          _buildInfoRow('생년월일', UserData.birthDate, showDivider: true),
-          _buildInfoRow('전화번호', UserData.phone, showDivider: true),
-          _buildInfoRow('이메일', UserData.email, showDivider: false),
+          _buildInfoRow('이름', _userData['name'] ?? '', showDivider: true),
+          _buildInfoRow('생년월일', _userData['birthDate'] ?? '', showDivider: true),
+          _buildInfoRow('전화번호', _userData['phone'] ?? '', showDivider: true),
+          _buildInfoRow('이메일', _userData['email'] ?? '', showDivider: false),
         ],
       ),
     );
@@ -142,11 +233,11 @@ class _MyPageState extends State<MyPage> {
             style: CommonStyles.titleStyle,
           ),
           const SizedBox(height: 12),
-          _buildInfoRow('가게명', UserData.businessName, showDivider: true),
-          _buildInfoRow('업종', UserData.businessType, showDivider: true),
-          _buildInfoRow('사업자번호', UserData.businessNumber, showDivider: true),
-          _buildInfoRow('주소', UserData.address, showDivider: true),
-          _buildInfoRow('번호', UserData.businessPhone, showDivider: false),
+          _buildInfoRow('가게명', _userData['businessName'] ?? '', showDivider: true),
+          _buildInfoRow('업종', _userData['businessType'] ?? '', showDivider: true),
+          _buildInfoRow('사업자번호', _userData['businessNumber'] ?? '', showDivider: true),
+          _buildInfoRow('주소', _userData['address'] ?? '', showDivider: true),
+          _buildInfoRow('번호', _userData['businessPhone'] ?? '', showDivider: false),
         ],
       ),
     );
@@ -173,7 +264,10 @@ class _MyPageState extends State<MyPage> {
                 reverseTransitionDuration: Duration.zero,
               ),
             );
-            if (result == true) setState(() {});
+            if (result == true) {
+              // 정보 수정 후 데이터 새로고침
+              await _loadUserData();
+            }
           }, showDivider: true),
           _buildMenuRow('문의사항', () {
             Navigator.pushReplacement(
@@ -185,7 +279,7 @@ class _MyPageState extends State<MyPage> {
               ),
             );
           }, showDivider: true),
-          _buildMenuRow('네이버 연동', () {
+          _buildMenuRow('네이버 플레이스 연동', () {
             Navigator.push(
               context,
               PageRouteBuilder(
@@ -233,7 +327,7 @@ class _MyPageState extends State<MyPage> {
   }
 
   Widget _buildMenuRow(String title, VoidCallback onTap, {bool showDivider = false}) {
-    final row = Container(
+    final row = SizedBox(
       width: double.infinity,
       child: GestureDetector(
         onTap: onTap,
@@ -287,7 +381,7 @@ Widget _buildBottomNavigation_REMOVED() {
             ],
           ),
         ),
-        Positioned(
+        const Positioned(
           top: -25,
           left: 0,
           right: 0,
@@ -306,7 +400,7 @@ Widget _buildNavItem(String imagePath, String label, bool isSelected) {
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => AdCreationPage(),
+            pageBuilder: (context, animation, secondaryAnimation) => const AdCreationPage(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ),
@@ -315,7 +409,7 @@ Widget _buildNavItem(String imagePath, String label, bool isSelected) {
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => RevenueAnalysisPage(),
+            pageBuilder: (context, animation, secondaryAnimation) => const RevenueAnalysisPage(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ),
@@ -324,7 +418,7 @@ Widget _buildNavItem(String imagePath, String label, bool isSelected) {
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => MyPage(),
+            pageBuilder: (context, animation, secondaryAnimation) => const MyPage(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ),
@@ -429,14 +523,14 @@ Widget _buildMicButton_REMOVED() {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 '정말 로그아웃 하시겠습니까?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   letterSpacing: -0.55,
-                  color: const Color(0xFF666666),
+                  color: Color(0xFF666666),
                   height: 1.4,
                 ),
               ),
@@ -452,12 +546,12 @@ Widget _buildMicButton_REMOVED() {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: const Color(0xFFF8F9FA),
                       ),
-                      child: Text(
+                      child: const Text(
                         '취소',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF666666),
+                          color: Color(0xFF666666),
                           letterSpacing: -0.8,
                         ),
                       ),
@@ -466,8 +560,9 @@ Widget _buildMicButton_REMOVED() {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                      onPressed: () async {
+                        Navigator.pop(context); // 다이얼로그 닫기
+                        await _performLogout(); // 로그아웃 실행
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF00AEFF),
@@ -475,7 +570,7 @@ Widget _buildMicButton_REMOVED() {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         elevation: 0,
                       ),
-                      child: Text(
+                      child: const Text(
                         '로그아웃',
                         style: TextStyle(
                           fontSize: 16,
@@ -493,6 +588,25 @@ Widget _buildMicButton_REMOVED() {
         ),
       ),
     );
+  }
+
+  // 로그아웃 실행
+  Future<void> _performLogout() async {
+    try {
+      final authService = AuthService();
+      await authService.logout();
+      // 서버 성공 여부와 관계없이 로컬 상태는 정리됨
+      UserData.clear();
+      widget.onLogout?.call();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
+      print('✅ 로그아웃 완료');
+    } catch (e) {
+      print('❌ 로그아웃 실패: $e');
+      // 에러가 발생해도 앱 상태 업데이트
+      widget.onLogout?.call();
+    }
   }
 
   void _showWithdrawDialog() {
@@ -516,14 +630,14 @@ Widget _buildMicButton_REMOVED() {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 '정말 탈퇴하시겠습니까?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   letterSpacing: -0.8,
-                  color: const Color(0xFF666666),
+                  color: Color(0xFF666666),
                   height: 1.4,
                 ),
               ),
@@ -539,12 +653,12 @@ Widget _buildMicButton_REMOVED() {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: const Color(0xFFF8F9FA),
                       ),
-                      child: Text(
+                      child: const Text(
                         '취소',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF666666),
+                          color: Color(0xFF666666),
                           letterSpacing: -0.8,
                         ),
                       ),
@@ -570,7 +684,7 @@ Widget _buildMicButton_REMOVED() {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         elevation: 0,
                       ),
-                      child: Text(
+                      child: const Text(
                         '탈퇴하기',
                         style: TextStyle(
                           fontSize: 16,

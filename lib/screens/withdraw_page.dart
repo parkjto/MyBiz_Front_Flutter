@@ -1,14 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'mypage.dart';
-import 'signup_page.dart';
-
-import 'package:mybiz_app/screens/ad_creation_page.dart';
-import 'package:mybiz_app/screens/revenue_analysis_page.dart';
-import 'package:mybiz_app/screens/ai_chat_page.dart';
-import 'package:mybiz_app/widgets/main_bottom_nav.dart';
-import 'package:mybiz_app/widgets/main_header.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
+import 'package:mybiz_app/widgets/main_header.dart';
+import 'package:mybiz_app/widgets/main_bottom_nav.dart';
+
+// UserData 클래스 정의
+class UserData {
+  static String name = '';
+  static String phone = '';
+  static String birthDate = '';
+  static String email = '';
+  static String businessPhone = '';
+  static String businessName = '';
+  static String businessNumber = '';
+  static String businessType = '';
+  static String address = '';
+
+  static void initializeFromSocialLogin() {
+    // 소셜 로그인에서 받은 기본 정보로 초기화
+    // 실제로는 SharedPreferences나 다른 저장소에서 가져와야 함
+  }
+
+  static void initialize() {
+    // 기존 사용자 정보로 초기화
+  }
+
+  static void initializeDefault() {
+    name = '';
+    phone = '';
+    birthDate = '';
+    email = '';
+    businessPhone = '';
+    businessName = '';
+    businessNumber = '';
+    businessType = '';
+    address = '';
+  }
+
+  static void clear() {
+    initializeDefault();
+  }
+}
 
 class WithdrawPage extends StatefulWidget {
   const WithdrawPage({super.key});

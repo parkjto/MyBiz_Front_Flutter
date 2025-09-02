@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
+import '../services/social_auth_service.dart';
+import '../services/auth_storage_service.dart';
+import '../services/user_service.dart';
+import '../services/user_data_service.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class LoginPage extends StatefulWidget {
+  final VoidCallback? onLoginSuccess;
+  
+  const LoginPage({super.key, this.onLoginSuccess});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final SocialAuthService _authService = SocialAuthService();
+  final AuthStorageService _storageService = AuthStorageService();
+  bool _isKakaoLoading = false;
+  bool _isNaverLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +99,7 @@ class LoginPage extends StatelessWidget {
                       'assets/images/kakao.png',
                       const Color(0xfffddc3f),
                       Colors.black,
+                      _isKakaoLoading,
                       () => _handleKakaoLogin(context),
                     ),
                     const SizedBox(height: 10),
@@ -92,6 +109,7 @@ class LoginPage extends StatelessWidget {
                       'assets/images/naver.png',
                       const Color(0xff03c75a),
                       Colors.white,
+                      _isNaverLoading,
                       () => _handleNaverLogin(context),
                     ),
                   ],
@@ -110,6 +128,7 @@ class LoginPage extends StatelessWidget {
     String iconPath,
     Color backgroundColor,
     Color textColor,
+    bool isLoading,
     VoidCallback onPressed,
   ) {
     return Container(
@@ -121,12 +140,22 @@ class LoginPage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onPressed,
+          onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(CommonStyles.buttonRadius),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(iconPath, width: 22, height: 22, fit: BoxFit.contain),
+              if (isLoading)
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                  ),
+                )
+              else
+                Image.asset(iconPath, width: 22, height: 22, fit: BoxFit.contain),
               const SizedBox(width: 10),
               Text(
                 text,
@@ -144,21 +173,278 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  void _handleKakaoLogin(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('카카오 로그인 처리 중...')),
-    );
-    Future.delayed(const Duration(milliseconds: 800), () {
-      Navigator.pushReplacementNamed(context, '/signup');
+  // 카카오 로그인 처리
+  Future<void> _handleKakaoLogin(BuildContext context) async {
+    if (_isKakaoLoading) return;
+
+    setState(() {
+      _isKakaoLoading = true;
     });
+
+    try {
+      // 1. 카카오 인증 URL 가져오기 (강제 재인증 파라미터 포함)
+      final authUrl = await _authService.getKakaoAuthUrl();
+      if (authUrl == null) {
+        throw Exception('카카오 인증 URL을 가져올 수 없습니다.');
+      }
+
+      // 2. WebView로 OAuth 인증 진행 (캐시 없이)
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => OAuthWebViewDialog(
+            authUrl: authUrl,
+            provider: '카카오',
+            onSuccess: (String code) async {
+              // 3. 인증 코드로 로그인 처리
+              await _processKakaoLogin(code);
+            },
+            onCancel: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('카카오 로그인 실패: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isKakaoLoading = false;
+        });
+      }
+    }
   }
 
-  void _handleNaverLogin(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('네이버 로그인 처리 중...')),
-    );
-    Future.delayed(const Duration(milliseconds: 800), () {
-      Navigator.pushReplacementNamed(context, '/signup');
+  // 네이버 로그인 처리
+  Future<void> _handleNaverLogin(BuildContext context) async {
+    if (_isNaverLoading) return;
+
+    setState(() {
+      _isNaverLoading = true;
     });
+
+    try {
+      // 1. 네이버 인증 URL 가져오기 (강제 재인증 파라미터 포함)
+      final authUrl = await _authService.getNaverAuthUrl();
+      if (authUrl == null) {
+        throw Exception('네이버 인증 URL을 가져올 수 없습니다.');
+      }
+
+      // 2. WebView로 OAuth 인증 진행 (캐시 없이)
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => OAuthWebViewDialog(
+            authUrl: authUrl,
+            provider: '네이버',
+            onSuccess: (String code) async {
+              // 3. 인증 코드로 로그인 처리
+              await _processNaverLogin(code);
+            },
+            onCancel: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('네이버 로그인 실패: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isNaverLoading = false;
+        });
+      }
+    }
+  }
+
+  // 카카오 로그인 처리 및 결과 처리
+  Future<void> _processKakaoLogin(String code) async {
+    try {
+      final result = await _authService.processKakaoLogin(code);
+      final normalized = _normalizeAuthResult(result);
+      
+      if (mounted) {
+        // 로그인 성공 처리
+        await _handleLoginSuccess(
+          normalized['access_token'] ?? '',
+          normalized['refresh_token'],
+          normalized['expires_at'],
+          normalized['user'],
+          result['user']?['provider'] ?? '카카오',
+          isRegistered: result['isRegistered'] == true || result['isNewUser'] == false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('카카오 로그인 처리 실패: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // 네이버 로그인 처리 및 결과 처리
+  Future<void> _processNaverLogin(String code) async {
+    try {
+      final result = await _authService.processNaverLogin(code);
+      final normalized = _normalizeAuthResult(result);
+      
+      if (mounted) {
+        // 로그인 성공 처리
+        await _handleLoginSuccess(
+          normalized['access_token'] ?? '',
+          normalized['refresh_token'],
+          normalized['expires_at'],
+          normalized['user'],
+          result['user']?['provider'] ?? '네이버',
+          isRegistered: result['isRegistered'] == true || result['isNewUser'] == false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('네이버 로그인 처리 실패: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // 로그인 성공 처리
+  Future<void> _handleLoginSuccess(String accessToken, String? refreshToken, String? expiresAt, Map<String, dynamic>? user, String loginProvider, {bool isRegistered = false}) async {
+    try {
+      print('🎉 로그인 성공 처리 시작: $loginProvider');
+      print('📊 받은 데이터: $user');
+      
+      // 토큰 저장
+      print('🔑 액세스 토큰 저장 중...');
+      await _storageService.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        expiresAt: (expiresAt != null && expiresAt.isNotEmpty)
+            ? DateTime.tryParse(expiresAt)
+            : null,
+      );
+      print('✅ 토큰 저장 완료');
+
+      // 로그인 제공자 저장 (소셜 로그아웃용)
+      print('🏷️ 로그인 제공자 저장 중...');
+      await _storageService.saveLoginProvider(loginProvider);
+      print('✅ 로그인 제공자 저장 완료');
+
+      // 사용자/스토어 정보 동기화
+      await _syncProfileAndStore();
+
+      // 성공 메시지 표시
+      if (mounted) {
+        print('📱 성공 메시지 표시 중...');
+        // 분기: 기존 회원이면 메인으로, 신규면 추가정보 입력으로
+        final targetRoute = isRegistered ? '/main' : '/signup';
+        final message = isRegistered ? '$loginProvider 로그인 성공!' : '$loginProvider 로그인 성공! 추가 정보를 입력해주세요.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: const Color(0xFF4CAF50),
+          ),
+        );
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, targetRoute);
+          }
+        });
+      }
+    } catch (e) {
+      print('❌ 로그인 성공 처리 중 오류: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그인 정보 저장 실패: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _syncProfileAndStore() async {
+    try {
+      // 서버에서 me, stores 조회 후 로컬 UserDataService에 반영
+      final userService = UserService();
+      final me = await userService.getMe();
+      final stores = await userService.listStores();
+
+      // 1) 사용자 로컬 저장
+      await UserDataService.saveUserData(
+        name: me['nickname'] ?? '',
+        phone: me['phone_number'] ?? '',
+        email: me['email'] ?? '',
+        businessType: me['business_type'] ?? '',
+        address: (stores.isNotEmpty ? (stores.first['address'] ?? '') : ''),
+        businessName: (stores.isNotEmpty ? (stores.first['store_name'] ?? '') : ''),
+        businessPhone: (stores.isNotEmpty ? (stores.first['phone'] ?? '') : ''),
+      );
+
+      // 2) primary store id 저장 (첫번째를 기본으로 간주)
+      if (stores.isNotEmpty && stores.first['id'] != null) {
+        await UserDataService.saveUserStoreId(stores.first['id']);
+      }
+    } catch (e) {
+      // 동기화 실패는 로그인 자체를 막지 않음
+    }
+  }
+
+  // 백엔드 응답을 안전하게 정규화 (키 이름/타입 다양성 대응)
+  Map<String, dynamic> _normalizeAuthResult(Map<String, dynamic> data) {
+    final map = Map<String, dynamic>.from(data);
+
+    String? accessToken = map['access_token'] ?? map['accessToken'] ?? map['token'];
+    String? refreshToken = map['refresh_token'] ?? map['refreshToken'];
+
+    // 만료값: ISO 문자열 또는 expires_in(초)
+    String? expiresAt;
+    final rawExpiresAt = map['expires_at'] ?? map['expiresAt'];
+    final expiresIn = map['expires_in'] ?? map['expiresIn'];
+    if (rawExpiresAt is String && rawExpiresAt.isNotEmpty) {
+      expiresAt = rawExpiresAt;
+    } else if (expiresIn is num) {
+      final dt = DateTime.now().add(Duration(seconds: expiresIn.toInt()));
+      expiresAt = dt.toIso8601String();
+    }
+
+    Map<String, dynamic>? user;
+    final rawUser = map['user'] ?? map['profile'] ?? map['data'];
+    if (rawUser is Map) {
+      user = Map<String, dynamic>.from(rawUser as Map);
+    }
+
+    return {
+      'access_token': accessToken,
+      'refresh_token': refreshToken,
+      'expires_at': expiresAt,
+      'user': user,
+    };
   }
 }

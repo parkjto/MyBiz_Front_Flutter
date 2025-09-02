@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mybiz_app/screens/main_page.dart';
-import 'package:mybiz_app/widgets/common_styles.dart';
 
 class MainHeader extends StatelessWidget {
   final String title;

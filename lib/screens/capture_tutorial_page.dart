@@ -98,7 +98,7 @@ class _CaptureTutorialPageState extends State<CaptureTutorialPage> {
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.55,
-                color: Color(0xFF333333),
+                color: const Color(0xFF333333),
               ),
             ),
           ),

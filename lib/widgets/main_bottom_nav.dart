@@ -9,12 +9,14 @@ import 'package:mybiz_app/screens/ai_chat_page.dart';
 
 class MainBottomNavBar extends StatelessWidget {
     final int selectedIndex;
-    const MainBottomNavBar({super.key, required this.selectedIndex});
+    final VoidCallback? onLogout;
+    
+    const MainBottomNavBar({super.key, required this.selectedIndex, this.onLogout});
 
     void _onTap(BuildContext context, int index) {
         if (index == 0) {
             Navigator.push(context, PageRouteBuilder(
-                pageBuilder: (c, a, b) => const MainPage(), 
+                pageBuilder: (c, a, b) => MainPage(onLogout: onLogout), 
                 transitionDuration: Duration.zero, 
                 reverseTransitionDuration: Duration.zero
             ));
@@ -32,7 +34,7 @@ class MainBottomNavBar extends StatelessWidget {
             ));
         } else if (index == 3) {
             Navigator.push(context, PageRouteBuilder(
-                pageBuilder: (c, a, b) => MyPage(), 
+                pageBuilder: (c, a, b) => MyPage(onLogout: onLogout), 
                 transitionDuration: Duration.zero, 
                 reverseTransitionDuration: Duration.zero
             ));
@@ -43,7 +45,7 @@ class MainBottomNavBar extends StatelessWidget {
     Widget build(BuildContext context) {
         final bottom = MediaQuery.of(context).padding.bottom;
         return ClipRRect(
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(CommonStyles.dialogRadius), topRight: Radius.circular(CommonStyles.dialogRadius)),
+            borderRadius: const BorderRadius.only(topLeft: Radius.circular(CommonStyles.dialogRadius), topRight: Radius.circular(CommonStyles.dialogRadius)),
             child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(

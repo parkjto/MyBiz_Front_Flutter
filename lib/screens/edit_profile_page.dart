@@ -1,14 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:mybiz_app/widgets/common_styles.dart';
-import 'mypage.dart';
-import 'signup_page.dart';
-import 'store_search_popup.dart';
 import 'package:mybiz_app/widgets/main_header.dart';
+import 'store_search_popup.dart';
+import '../services/user_data_service.dart';
+import '../services/store_service.dart';
+
+// UserData 클래스 정의
+class UserData {
+  static String name = '';
+  static String phone = '';
+  static String birthDate = '';
+  static String email = '';
+  static String businessPhone = '';
+  static String businessName = '';
+  static String businessNumber = '';
+  static String businessType = '';
+  static String address = '';
+
+  static void initializeFromSocialLogin() {
+    // 소셜 로그인에서 받은 기본 정보로 초기화
+    // 실제로는 SharedPreferences나 다른 저장소에서 가져와야 함
+  }
+
+  static void initialize() {
+    // 기존 사용자 정보로 초기화
+  }
+
+  static void initializeDefault() {
+    name = '';
+    phone = '';
+    birthDate = '';
+    email = '';
+    businessPhone = '';
+    businessName = '';
+    businessNumber = '';
+    businessType = '';
+    address = '';
+  }
+
+  static void clear() {
+    initializeDefault();
+  }
+}
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
-
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
@@ -25,19 +61,48 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _businessNumberController = TextEditingController();
   final TextEditingController _businessTypeController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  String? _selectedPlaceId;
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = UserData.name;
-    _phoneController.text = UserData.phone;
-    _birthDateController.text = UserData.birthDate;
-    _emailController.text = UserData.email;
-    _businessNameController.text = UserData.businessName;
-    _businessNumberController.text = UserData.businessNumber;
-    _businessTypeController.text = UserData.businessType;
-    _addressController.text = UserData.address;
-    _businessPhoneController.text = UserData.businessPhone;
+    _loadUserData();
+  }
+
+  // 저장된 사용자 데이터 불러오기
+  Future<void> _loadUserData() async {
+    try {
+      final userData = await UserDataService.getUserData();
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData['name'] ?? '';
+          _phoneController.text = userData['phone'] ?? '';
+          _birthDateController.text = userData['birthDate'] ?? '';
+          _emailController.text = userData['email'] ?? '';
+          _businessNameController.text = userData['businessName'] ?? '';
+          _businessNumberController.text = userData['businessNumber'] ?? '';
+          _businessTypeController.text = userData['businessType'] ?? '';
+          _addressController.text = userData['address'] ?? '';
+          _businessPhoneController.text = userData['businessPhone'] ?? '';
+          
+          // UserData 클래스에도 동기화
+          UserData.name = userData['name'] ?? '';
+          UserData.phone = userData['phone'] ?? '';
+          UserData.birthDate = userData['birthDate'] ?? '';
+          UserData.email = userData['email'] ?? '';
+          UserData.businessName = userData['businessName'] ?? '';
+          UserData.businessNumber = userData['businessNumber'] ?? '';
+          UserData.businessType = userData['businessType'] ?? '';
+          UserData.address = userData['address'] ?? '';
+          UserData.businessPhone = userData['businessPhone'] ?? '';
+        });
+        print('✅ 사용자 데이터 로드 완료: ${userData['name']}');
+      } else {
+        print('⚠️ 저장된 사용자 데이터가 없습니다');
+      }
+    } catch (e) {
+      print('❌ 사용자 데이터 로드 실패: $e');
+    }
   }
 
   @override
@@ -124,6 +189,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           }
                           return null;
                         },
+                        onTap: _showStoreSearchPopup, // 상호명 검색 팝업 호출
                       ),
                       const SizedBox(height: 16),
                       _buildInputField(
@@ -187,6 +253,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required String label,
     required TextEditingController controller,
     String? Function(String?)? validator,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,22 +278,58 @@ class _EditProfilePageState extends State<EditProfilePage> {
               width: 1,
             ),
           ),
-          child: TextFormField(
-            controller: controller,
-            validator: validator,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-            ),
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF333333),
-              letterSpacing: -0.55,
-            ),
-          ),
+          child: onTap != null
+            ? GestureDetector(
+                onTap: onTap,
+                child: TextFormField(
+                  controller: controller,
+                  validator: validator,
+                  enabled: false, // 터치만 가능하도록
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  ),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF333333),
+                    letterSpacing: -0.55,
+                  ),
+                ),
+              )
+            : TextFormField(
+                controller: controller,
+                validator: validator,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                ),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF333333),
+                  letterSpacing: -0.55,
+                ),
+              ),
         ),
       ],
+    );
+  }
+
+  void _showStoreSearchPopup() {
+    showDialog(
+      context: context,
+      builder: (context) => StoreSearchPopup(
+        isSignupMode: false, // 일반 모드 (기본값)
+        onStoreSelected: (name, address, businessType, placeId) {
+          setState(() {
+            _businessNameController.text = name;
+            _addressController.text = address;
+            _businessTypeController.text = businessType;
+            _selectedPlaceId = placeId;
+          });
+        },
+      ),
     );
   }
 
@@ -246,13 +349,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
               width: 1,
             ),
           ),
-              child: Center(
+              child: const Center(
                 child: Text(
                   '취소',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF00C2FD),
+                    color: Color(0xFF00C2FD),
                     letterSpacing: -0.55,
                   ),
                 ),
@@ -270,7 +373,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 gradient: CommonStyles.brandGradient,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Center(
+              child: const Center(
                 child: Text(
                   '저장',
                   style: TextStyle(
@@ -288,13 +391,83 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      // 프로필 저장 로직
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('프로필이 저장되었습니다')),
-      );
-      Navigator.pop(context, true);
+      try {
+        // 1) 기본 사용자 데이터 저장 (로컬)
+        // UserDataService를 사용하여 데이터 업데이트
+        await UserDataService.saveUserData(
+          name: _nameController.text,
+          phone: _phoneController.text,
+          birthDate: _birthDateController.text,
+          email: _emailController.text,
+          businessName: _businessNameController.text,
+          businessNumber: _businessNumberController.text,
+          businessType: _businessTypeController.text,
+          address: _addressController.text,
+          businessPhone: _businessPhoneController.text,
+        );
+
+        // 2) user_stores 업데이트 또는 생성
+        try {
+          final storeService = StoreService();
+          final userStoreId = await UserDataService.getUserStoreId();
+          final payload = {
+            'name': _businessNameController.text,
+            'address': _addressController.text,
+            'businessType': _businessTypeController.text,
+            'place_id': _selectedPlaceId,
+          };
+
+          if (userStoreId != null && userStoreId.isNotEmpty) {
+            final updated = await storeService.updateStore(userStoreId, payload);
+            if (updated['id'] is String) {
+              await UserDataService.saveUserStoreId(updated['id']);
+            }
+          } else {
+            final created = await storeService.createStore(payload, isPrimary: true);
+            if (created['id'] is String) {
+              await UserDataService.saveUserStoreId(created['id']);
+            }
+          }
+        } catch (e) {
+          // 스토어 동기화 실패는 프로필 저장 자체를 막지 않되 사용자에게 토스트로 알림할 수도 있음
+        }
+        
+        // UserData 클래스도 업데이트
+        UserData.name = _nameController.text;
+        UserData.phone = _phoneController.text;
+        UserData.birthDate = _birthDateController.text;
+        UserData.email = _emailController.text;
+        UserData.businessName = _businessNameController.text;
+        UserData.businessNumber = _businessNumberController.text;
+        UserData.businessType = _businessTypeController.text;
+        UserData.address = _addressController.text;
+        UserData.businessPhone = _businessPhoneController.text;
+        
+        // 성공 메시지 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('프로필이 저장되었습니다. MyBiz를 시작합니다!'),
+            backgroundColor: Color(0xFF4CAF50),
+          ),
+        );
+        
+        // 메인 페이지로 이동
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            Navigator.pop(context, true); // true 반환하여 저장 완료 알림
+          }
+        });
+      } catch (e) {
+        print('❌ 프로필 저장 실패: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('프로필 저장에 실패했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

@@ -21,7 +21,7 @@ class ReviewAnalysisPage extends StatefulWidget {
 
 class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
   final ImageUploadService _uploadService = ImageUploadService();
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   String? _uploadError;
@@ -52,11 +52,11 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(CommonStyles.dialogRadius)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+          child: const Padding(
+            padding: EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Text(
                   '리뷰 분석 가이드',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF333333), letterSpacing: -0.8),
@@ -207,9 +207,9 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _legend('긍정 (${pos}%)', const Color(0xFFC2E1FF)),
-                  _legend('보통 (${neu}%)', const Color(0xFFFFCB9B)),
-                  _legend('부정 (${neg}%)', const Color(0xFFFFBCB7)),
+                  _legend('긍정 ($pos%)', const Color(0xFFC2E1FF)),
+                  _legend('보통 ($neu%)', const Color(0xFFFFCB9B)),
+                  _legend('부정 ($neg%)', const Color(0xFFFFBCB7)),
                 ],
               ),
             ],
@@ -253,7 +253,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
               fillColor: const Color(0xFFE1EBFF), 
               textColor: const Color(0xFF1E2A44)
             ),
-          )).toList(),
+          )),
         ],
       ),
     );
@@ -277,7 +277,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
           ...points.map((point) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _buildPointItem(point['label'], point['percentage']),
-          )).toList(),
+          )),
         ],
       ),
     );
@@ -619,7 +619,7 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
               ],
             ),
           ),
-          Positioned(top: -25, left: 0, right: 0, child: Center(child: SizedBox())), 
+          const Positioned(top: -25, left: 0, right: 0, child: Center(child: SizedBox())), 
         ],
       ),
     );
@@ -629,11 +629,11 @@ class _ReviewAnalysisPageState extends State<ReviewAnalysisPage> {
     return GestureDetector(
       onTap: () {
         if (label == '광고 생성') {
-          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => AdCreationPage(), transitionDuration: Duration.zero));
+          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => const AdCreationPage(), transitionDuration: Duration.zero));
         } else if (label == '분석') {
           Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => const RevenueAnalysisPage(), transitionDuration: Duration.zero));
         } else if (label == '마이페이지') {
-          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => MyPage(), transitionDuration: Duration.zero));
+          Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => const MyPage(), transitionDuration: Duration.zero));
         }
       },
       child: Column(
@@ -725,9 +725,9 @@ class _PrimaryGradientButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: busy
-            ? Row(
+            ? const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   SizedBox(
                     width: 16,
                     height: 16,
