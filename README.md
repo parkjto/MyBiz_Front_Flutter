@@ -49,7 +49,7 @@ AI 기반 요약: 네이버 계정 연동으로 수집된 고객 리뷰를 기�
 
 ### 🤖 AI 챗봇
 
-<img width="3200" height="1800" alt="image" src="https://github.com/user-attachments/assets/54ddf1f8-96e1-4508-8833-ddb716d8b87f" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/41fe888f-1040-4946-863b-5936fbd3e9d0" />
 
 AI 상담 : 채팅 및 음성인식을 지원하는 AI 챗봇을 통해 언제 어디서든 비즈니스 관련 문의를 해결할 수 있습니다.
 
